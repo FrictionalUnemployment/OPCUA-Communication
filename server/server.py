@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import logging, sys, asyncio, OpenOPC, decimal
+import sys, asyncio, OpenOPC, decimal
 
 from asyncua import ua, Server, uamethod
 
@@ -22,7 +22,6 @@ class SubHandler(object):
     """
     Subscription handler to receive events from the server.
     """
-  
 
     def datachange_notification(self, node, val, data):
         p_a_string = node.get_path_as_string() #Get a list containing root, objects, opc da server
@@ -106,5 +105,25 @@ async def main():
     nodes_list = da.list('*', recursive=True) #A list of dot-delimited strings
     await sort_nodes_list(nodes_list, idx, root, da)
     
+    try:
+        async with server: #Starting the server
+            handler = SubHandler() #Subscribing to datachanges coming from the UA clients
+            sub = await server.create_subscription(500, handler)
+            handle = await sub.subscribe_data_change(writeable_variables.values())
+            readable_vars = list(writeable_variables) #readable_variables
+            #print(writeable_variables)
+        while True:
+            await asyncio.sleep(1)
+            for i in da.list(readable_vars):
+                da_id = i[0]
+                var_handler = readable_variables[da_id]
+                var_handler.set_value(read_value(i[1:]))
+
+
+    finally:
+        await server.stop()
+        da.close()
+
+
 if __name__ == "__main__":
     asyncio.run(main())
