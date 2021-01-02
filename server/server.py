@@ -1,7 +1,12 @@
 #!/usr/bin/env python
-import sys, asyncio, OpenOPC, decimal
+#Credits to http://courses.compute.dtu.dk/02619/software/opcda_to_opcua.py
+#Helped with the conversion of OPCDA to OPCUA
 
+import sys, asyncio, OpenOPC, decimal, time, pywintypes
+from datetime import datetime
 from asyncua import ua, Server, uamethod
+
+pywintypes.datetime = pywintypes.TimeType
 
 UA_URI = 'https://hv.se'
 OPCDA_SERVER_STRING = ""
@@ -31,6 +36,7 @@ class SubHandler(object):
         print('Datachanged ', da_address, val)
         da.write((da_address, val,))
         da.close()
+
 
 def read_value(value):
 	value = value[0]
@@ -110,13 +116,16 @@ async def main():
             handler = SubHandler() #Subscribing to datachanges coming from the UA clients
             sub = await server.create_subscription(500, handler)
             handle = await sub.subscribe_data_change(writeable_variables.values())
-            readable_vars = list(writeable_variables) #readable_variables
-            #print(writeable_variables)
+            #In Robotstudio all variables are writeable, so the readable variables are empty
+            #This should be changed when tried in a real environment, so temporary for now
+            readable_vars = list(writeable_variables.keys()) #readable_variables
+            #print(readable_vars)
         while True:
             await asyncio.sleep(1)
-            for i in da.list(readable_vars):
+            for i in da.read(readable_vars):
+                print(i)
                 da_id = i[0]
-                var_handler = readable_variables[da_id]
+                var_handler = writeable_variables[da_id] # Due to change
                 var_handler.set_value(read_value(i[1:]))
 
 
