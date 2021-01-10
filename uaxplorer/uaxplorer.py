@@ -1,6 +1,7 @@
 from opcua import Client
 from tkinter import *
 from tkinter import ttk
+from discovery import Discovery
 import time
 
 url = "opc.tcp://127.0.0.1:4840"

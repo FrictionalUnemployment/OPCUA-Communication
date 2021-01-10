@@ -44,7 +44,7 @@ class DiscoveryListener:
     enligt https://github.com/OPCFoundation/UA-LDS/blob/master/zeroconf.c
     rad 222-238. """
 
-types = ["_http._tcp.local.", "_googlecast._tcp.local."]
+types = ["_opcua-https._tcp.local.", "_opcua-tcp._tcp.local.", "_opcua-wss._tcp.local."]
 class Discovery:
     def __init__(self, types):
         self.sdict = {}
@@ -63,11 +63,3 @@ class Discovery:
             for addr in self.sdict[k][DADDR]:
                 l.append((name, addr, port))
         return l
-
-
-d = Discovery(types)
-
-while True:
-    input("Press enter to get new printout....\n\n")
-    for item in d.get_services():
-        print(item)
