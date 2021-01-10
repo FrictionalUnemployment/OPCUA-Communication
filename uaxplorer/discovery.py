@@ -17,7 +17,7 @@ def get_info(zeroconf, type, name):
 
 class DiscoveryListener:
     def __init__(self, servicedict):
-        self.servicedict = servicedict;
+        self.servicedict = servicedict
 
     def remove_service(self, zeroconf, type, name):
         info = get_info(zeroconf, type, name)
