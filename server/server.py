@@ -5,6 +5,11 @@
 import sys, asyncio, OpenOPC, decimal, time, pywintypes
 from datetime import datetime
 from asyncua import ua, Server, uamethod
+from zeroconf import ServiceInfo, Zeroconf
+import socket
+
+#local imports
+import announce_service as sa
 
 pywintypes.datetime = pywintypes.TimeType
 
@@ -133,6 +138,6 @@ async def main():
         await server.stop()
         da.close()
 
-
 if __name__ == "__main__":
+    sa.start_service_announcement()
     asyncio.run(main())
