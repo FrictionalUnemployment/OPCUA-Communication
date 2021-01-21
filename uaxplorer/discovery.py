@@ -44,7 +44,7 @@ class DiscoveryListener:
     enligt https://github.com/OPCFoundation/UA-LDS/blob/master/zeroconf.c
     rad 222-238. """
 
-types = ["_opcua-https._tcp.local.", "_opcua-tcp._tcp.local.", "_opcua-wss._tcp.local."]
+types = ["_opcua-tcp._tcp.local.", "_opcua-https._tcp.local.", "_opcua-wss._tcp.local.", "_opcua-tcp._tcp.local."]
 class Discovery:
     def __init__(self, types):
         self.sdict = {}
@@ -63,3 +63,10 @@ class Discovery:
             for addr in self.sdict[k][DADDR]:
                 l.append((name, addr, port))
         return l
+
+d = Discovery(types)
+
+if __name__ == "__main__":
+    while True:
+        print(d.get_services())
+        input()
