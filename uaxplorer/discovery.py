@@ -1,5 +1,16 @@
 from zeroconf import ServiceBrowser, Zeroconf
 
+
+# This is the Discovery implementation.
+#
+# Usage: Create an instance of the Discovery class.
+# As input it takes a list of strings of the services
+# it should search for. E.g : ["_opcua-tcp._tcp.local."]
+# To get a list of all found servers, call
+# the get_services() method and it will return a list of
+# tuples of the following format: ('name', 'ip address', 'port')
+
+
 INAME = 0
 IADDR = 1
 IPORT = 2
@@ -11,7 +22,7 @@ def get_info(zeroconf, type, name):
     if info is not None:
         name = info.get_name()
         addresses = info.parsed_addresses()
-        port = info.port
+        port = str(info.port)
         return (name, addresses, port)
     return None
 
@@ -44,7 +55,6 @@ class DiscoveryListener:
     enligt https://github.com/OPCFoundation/UA-LDS/blob/master/zeroconf.c
     rad 222-238. """
 
-types = ["_opcua-tcp._tcp.local.", "_opcua-https._tcp.local.", "_opcua-wss._tcp.local.", "_opcua-tcp._tcp.local."]
 class Discovery:
     def __init__(self, types):
         self.sdict = {}
@@ -67,6 +77,10 @@ class Discovery:
 d = Discovery(types)
 
 if __name__ == "__main__":
+    Test_types = ["_opcua-tcp._tcp.local.",
+                  "_opcua-https._tcp.local.",
+                  "_opcua-wss._tcp.local."]
+
     while True:
         print(d.get_services())
         input()
