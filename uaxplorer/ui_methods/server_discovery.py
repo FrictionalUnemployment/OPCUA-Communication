@@ -1,21 +1,35 @@
 #DISCOVER ALL SERVERS WITH THIS METHOD.
+import discovery as disc
 
-TUPLE_ARRAY = []
-DISCOVERY_OUTPUT = [('test_server', 'IP_ADDRESS', 'PORT_NUMBER'), ('test_server2', 'IP_ADDRESS2', 'PORT_NUMBER2')] #Change this to the discovery
-                                                                #output we get later on
+# For testing:
+#d = Server_Discovery() # Create an instance
 
-def insert_array(servers):
-    for i in servers:
-        TUPLE_ARRAY.append(i)
+#print(d.get_servers()) #Get all servers available in a tuple
 
-def get_all(array, type): #0 for server name, 1 for ip address, 2 for port number
-    temp_array = []
-    for i in TUPLE_ARRAY:
-        temp_array.append(i[type])
-    return temp_array
+#print(d.get_all(1)) # Get all ip addresses from all servers
 
+class Server_Discovery():
+    def __init__(self):
+        self.DISCOVERY_OUTPUT = []
 
+    def get_servers(self): # To find the servers available
 
+        Test_types = ["_opcua-tcp._tcp.local.",
+                    "_opcua-https._tcp.local.",
+                    "_opcua-wss._tcp.local."]
 
-insert_array(DISCOVERY_OUTPUT)
-print(get_all(TUPLE_ARRAY, 1))
+        d = disc.Discovery(Test_types)
+
+        while(len(self.DISCOVERY_OUTPUT) == 0):
+            if(len(d.get_services()) > 0):
+                self.DISCOVERY_OUTPUT = d.get_services()
+        
+        return self.DISCOVERY_OUTPUT
+    
+
+    def get_all(self, type): #0 for server name, 1 for ip address, 2 for port number
+        temp_array = []
+        for i in self.DISCOVERY_OUTPUT:
+            temp_array.append(i[type])
+
+        return temp_array

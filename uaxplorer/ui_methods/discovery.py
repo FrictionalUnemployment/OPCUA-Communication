@@ -74,13 +74,13 @@ class Discovery:
                 l.append((name, addr, port))
         return l
 
-d = Discovery(types)
+
 
 if __name__ == "__main__":
     Test_types = ["_opcua-tcp._tcp.local.",
                   "_opcua-https._tcp.local.",
                   "_opcua-wss._tcp.local."]
-
+    d = Discovery(Test_types)
     while True:
         print(d.get_services())
         input()

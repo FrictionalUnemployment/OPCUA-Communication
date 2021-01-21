@@ -32,7 +32,7 @@ def get_ip_address():
     return s.getsockname()[0]
 
 if __name__ == "__main__":
-    print("Starting service announcement for testing purposes"!)
+    print("Starting service announcement for testing purposes!")
     print("Press enter to exit.")
     start_service_announcement()
     input()
