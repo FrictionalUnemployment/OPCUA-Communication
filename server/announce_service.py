@@ -7,6 +7,8 @@ import socket
 # Usage:
 # Call the start_service_announcement() function.
 # Input is name of the device and the port it's using.
+# The device name should take the form "_NAME.".
+# The beginning underscore and ending dot is important.
 
 # Standard OPCUA server port, per IANA.
 ZC_PORT = 4840

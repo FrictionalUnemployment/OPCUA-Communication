@@ -139,5 +139,5 @@ async def main():
         da.close()
 
 if __name__ == "__main__":
-    sa.start_service_announcement()
+    sa.start_service_announcement(device_name="_adda-server.")
     asyncio.run(main())
