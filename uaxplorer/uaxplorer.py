@@ -1,6 +1,4 @@
 from opcua import Client
-from tkinter import *
-from tkinter import ttk
 from discovery import Discovery
 import time
 
