@@ -25,7 +25,6 @@ class Server_Discovery():
                 self.DISCOVERY_OUTPUT = d.get_services()
         
         return self.DISCOVERY_OUTPUT
-    
 
     def get_all(self, type): #0 for server name, 1 for ip address, 2 for port number
         temp_array = []
@@ -33,3 +32,15 @@ class Server_Discovery():
             temp_array.append(i[type])
 
         return temp_array
+
+    def combine(self, server):
+        return server[1] + ":" + server[2]
+
+    def get_all_as_address(self):
+        arr = []
+        for s in self.DISCOVERY_OUTPUT:
+            arr.append(combine(s))
+
+        return arr
+
+
