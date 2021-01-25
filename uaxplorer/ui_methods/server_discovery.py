@@ -39,7 +39,7 @@ class Server_Discovery():
     def get_all_as_address(self):
         arr = []
         for s in self.DISCOVERY_OUTPUT:
-            arr.append(combine(s))
+            arr.append(self.combine(s))
 
         return arr
 
