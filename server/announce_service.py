@@ -15,10 +15,10 @@ ZC_PORT = 4840
 # Test
 DEV_NAME = "_testopc."
 
-def start_service_announcement(device_name=DEV_NAME, port=ZC_PORT):
+def start_service_announcement(device_name=DEV_NAME, iport=ZC_PORT):
     info = ServiceInfo("_opcua-tcp._tcp.local.",
         device_name + "_opcua-tcp._tcp.local.",
-        port = ZC_PORT,
+        port = iport,
         server=device_name,
         addresses=[socket.inet_pton(socket.AF_INET, get_ip_address())])
     zeroconf = Zeroconf()
