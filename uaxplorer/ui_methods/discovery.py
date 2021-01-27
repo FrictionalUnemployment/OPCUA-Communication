@@ -67,7 +67,7 @@ class Discovery:
         l = []
         if not self.sdict:
             return l
-        for k in self.sdict.keys():
+        for k in list(self.sdict.keys()):
             name = k
             port = self.sdict[k][DPORT]
             for addr in self.sdict[k][DADDR]:
