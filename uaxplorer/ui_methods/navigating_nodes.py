@@ -20,11 +20,10 @@ class Navigating_nodes:
 
     def get_root_nodes(self):
         TEMP_ARRAY = []
-  
         for i in self.client.get_objects_node().get_children()[1:]: # Skipping first element as it is unnecessary, we grab all objects in a server
 
             TEMP_ARRAY.append(i)
-    
+   
         return TEMP_ARRAY
 
     def get_children_nodes(self, object_array): #Gets the children nodes from the root node and adds them into a dictonary

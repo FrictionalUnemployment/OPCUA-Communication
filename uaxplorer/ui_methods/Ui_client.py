@@ -1,16 +1,15 @@
 from opcua import Client, ua
-from server_discovery import *
+import server_discovery as disc
 
 
 
 class Ui_client():
     def __init__(self, server):
-        self.client = Client
+        self.client = Client("opc.tcp://" + server)
         self.servers = server
 
     def establish_client_connection(self):
 
-        self.client = Client("opc.tcp://" + self.servers)
         try:
             self.client.connect()
             print("client is connected: " + self.servers)
@@ -21,7 +20,7 @@ class Ui_client():
 
 
 def create_connection():
-    url = Server_Discovery()
+    url = disc.Server_Discovery()
     url.get_servers()
     servers = url.get_all_as_address()
     print(servers)
@@ -29,11 +28,5 @@ def create_connection():
     for i in servers:
         established_servers.append(Ui_client(i))
     
-    established_servers[0].establish_client_connection()
-    established_servers[1].establish_client_connection()
-    print(established_servers[0].client.get_root_node())
+    return established_servers
 
-        
-
-
-create_connection()
