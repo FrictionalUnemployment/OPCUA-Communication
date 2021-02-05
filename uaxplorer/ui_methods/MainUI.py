@@ -59,6 +59,7 @@ class Ui_MainWindow(object):
         self.treeView = QtWidgets.QTreeView(self.centralwidget)
         self.treeView.setGeometry(QtCore.QRect(10, 30, 331, 321))
         self.treeView.setHeaderHidden(True)
+        self.treeView.setStyleSheet("color: rgb(200, 200, 200);")
         self.verticalScrollBar = QtWidgets.QScrollBar(self.centralwidget)
         self.verticalScrollBar.setGeometry(QtCore.QRect(320, 30, 16, 321))
         self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
@@ -81,10 +82,14 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        
+        ############################### Discovery ################################
+
         treeModel = Qt.QStandardItemModel()
+        self.treeView.setHeaderHidden(True)
         self.rootNode = treeModel.invisibleRootItem()
-        test = Qt.QStandardItem('Testing')
-        self.rootNode.appendRow(test)
+        self.SERVER_ARR = []
+        self.STANDARDITEM_ARR = []
         self.treeView.setModel(treeModel)
 
     def retranslateUi(self, MainWindow):
@@ -109,23 +114,49 @@ class Ui_MainWindow(object):
             i.client.connect()
         
         for i in temp_node_arr:
-            name_dict = i.get_name_from_nodes(
+            name_dict.update(i.get_name_from_nodes(
                 i.get_children_nodes(
-                    i.get_root_nodes()))
+                    i.get_root_nodes())))
+    
         
         
+        z = 0
+        for key in name_dict.keys():
+            temp = Qt.QStandardItem(key)
+
+            l = name_dict[key]
+            for i in l:
+                temp.appendRow(Qt.QStandardItem(i))
+            self.STANDARDITEM_ARR[z].appendRow(temp)
+            z += 1
+
+
+               # for value in name_dict.values():
+                #    i.appendRow(Qt.QStandardItem(value))
 
         
-            
-        print(temp_node_arr[0].get_name_from_nodes(temp_node_arr[0].get_children_nodes(temp_node_arr[0].get_root_nodes())))
+        #    Server1                                      Server2
+        #["Parameters": ["temp", "ekrker", "efwer"], "Parameters2": ["qwkrk", "fkqk"]]
+
+
 
     def discover_servers(self):
         url = dsc.Server_Discovery()
         url.get_servers()
+        self.SERVER_ARR = url.get_all(0)
         servers = url.get_all_as_address()
         for i in servers:
             self.clients.append(ui_c.Ui_client(i))
 
+        for i in self.SERVER_ARR:
+            self.STANDARDITEM_ARR.append(Qt.QStandardItem(i))
+            
+        for j in range(len(self.SERVER_ARR)):
+            self.STANDARDITEM_ARR[j].setEditable(False)
+            self.rootNode.appendRow(self.STANDARDITEM_ARR[j])
+        
+
+        
         self.create_model()
 
         
