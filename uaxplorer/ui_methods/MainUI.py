@@ -22,7 +22,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.clients = list()
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(912, 490)
+        MainWindow.resize(914, 513)
         MainWindow.setStyleSheet("background-color: rgb(38, 38, 38);")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -46,7 +46,7 @@ class Ui_MainWindow(object):
         self.groupBox.setObjectName("groupBox")
         self.groupBox.setStyleSheet("color: rgb(200,200,200);")
         self.horizontalScrollBar = QtWidgets.QScrollBar(self.groupBox)
-        self.horizontalScrollBar.setGeometry(QtCore.QRect(0, 310, 571, 16))
+        self.horizontalScrollBar.setGeometry(QtCore.QRect(0, 310, 571, 19))
         self.horizontalScrollBar.setOrientation(QtCore.Qt.Horizontal)
         self.horizontalScrollBar.setObjectName("horizontalScrollBar")
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
@@ -57,11 +57,19 @@ class Ui_MainWindow(object):
         self.pushButton.setStyleSheet("color: rgb(200, 200, 200);")
         self.pushButton.setObjectName("pushButton")
         self.treeView = QtWidgets.QTreeView(self.centralwidget)
-        self.treeView.setGeometry(QtCore.QRect(10, 30, 331, 321))
-        self.treeView.setHeaderHidden(True)
-        self.treeView.setStyleSheet("color: rgb(200, 200, 200);")
+        self.treeView.setGeometry(QtCore.QRect(10, 26, 331, 325))
+        self.treeView.setObjectName("treeView")
+        self.right_treeView = QtWidgets.QTreeView(self.centralwidget)
+        self.right_treeView.setGeometry(QtCore.QRect(910, 26, 331, 325))
+        self.right_treeView.setObjectName("Right_treeview")
+        self.right_treeView.hide()
+        self.right_verticalscrollbar = QtWidgets.QScrollBar(self.centralwidget)
+        self.right_verticalscrollbar.setOrientation(QtCore.Qt.Vertical)
+        self.right_verticalscrollbar.setGeometry(QtCore.QRect(1220, 28, 20, 320))
+        self.right_verticalscrollbar.hide()
+        self.right_verticalscrollbar.setObjectName("VerticalScrollbar_for_righttreeview")
         self.verticalScrollBar = QtWidgets.QScrollBar(self.centralwidget)
-        self.verticalScrollBar.setGeometry(QtCore.QRect(320, 30, 16, 321))
+        self.verticalScrollBar.setGeometry(QtCore.QRect(320, 30, 20, 320))
         self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
         self.verticalScrollBar.setObjectName("verticalScrollBar")
         self.Connect.raise_()
@@ -70,7 +78,7 @@ class Ui_MainWindow(object):
         self.textBrowser.raise_()
         self.pushButton.raise_()
         self.treeView.raise_()
-        self.groupBox.raise_()
+        self.groupBox.raise_()  
         self.verticalScrollBar.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -80,6 +88,21 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 914, 21))
+        self.menubar.setObjectName("menubar")
+        self.menuFile = QtWidgets.QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
+        self.menuView = QtWidgets.QMenu(self.menubar)
+        self.menuView.setObjectName("menuView")
+        MainWindow.setMenuBar(self.menubar)
+        self.actionRight_Hand_tree = QtWidgets.QAction(MainWindow)
+        self.actionRight_Hand_tree.setObjectName("actionRight_Hand_tree")
+        self.actionRight_Hand_tree.triggered.connect(self.creating_right_window)
+        self.menuView.addAction(self.actionRight_Hand_tree)
+        self.menubar.addAction(self.menuFile.menuAction())
+        self.menubar.addAction(self.menuView.menuAction())
+
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
@@ -104,6 +127,17 @@ class Ui_MainWindow(object):
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>"))
         self.pushButton.setText(_translate("MainWindow", "Disconnect"))
+        self.menuFile.setTitle(_translate("MainWindow", "File"))
+        self.menuView.setTitle(_translate("MainWindow", "View"))
+        self.actionRight_Hand_tree.setText(_translate("MainWindow", "Expand a right hand tree"))
+
+
+
+    def creating_right_window(self):
+        MainWindow.resize(1245, 513) # resizing the window to be able to fit the new treeview
+        self.textBrowser.resize(1241, 111) # making the textbox bigger to be able to display more information
+        self.right_treeView.show()
+        self.right_verticalscrollbar.show()
 
     def create_model(self):
         temp_node_arr = list()
