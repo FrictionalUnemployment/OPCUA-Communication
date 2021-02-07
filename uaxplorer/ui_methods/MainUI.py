@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets, Qt
 from zeroconf import ServiceBrowser, Zeroconf
 import server_discovery as dsc
 import Ui_client as ui_c
+import client_nodes as cl_node
 import navigating_nodes as nav
 #from Ui_client import *
 import sys
@@ -108,12 +109,11 @@ class Ui_MainWindow(object):
         
         ############################### Discovery ################################
 
-        treeModel = Qt.QStandardItemModel()
+        self.treeModel = Qt.QStandardItemModel()
         self.treeView.setHeaderHidden(True)
-        self.rootNode = treeModel.invisibleRootItem()
-        self.SERVER_ARR = []
-        self.STANDARDITEM_ARR = []
-        self.treeView.setModel(treeModel)
+        self.rootNode = self.treeModel.invisibleRootItem()
+        self.treeView.setModel(self.treeModel)
+        
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -139,60 +139,30 @@ class Ui_MainWindow(object):
         self.right_treeView.show()
         self.right_verticalscrollbar.show()
 
-    def create_model(self):
-        temp_node_arr = list()
-        name_dict = {}
-        for i in self.clients:
-            
-            temp_node_arr.append(nav.Navigating_nodes(i.client))
-            i.client.connect()
-        
-        for i in temp_node_arr:
-            name_dict.update(i.get_name_from_nodes(
-                i.get_children_nodes(
-                    i.get_root_nodes())))
-    
-        
-        
-        z = 0
-        for key in name_dict.keys():
-            temp = Qt.QStandardItem(key)
-
-            l = name_dict[key]
-            for i in l:
-                temp.appendRow(Qt.QStandardItem(i))
-            self.STANDARDITEM_ARR[z].appendRow(temp)
-            z += 1
-
-
-               # for value in name_dict.values():
-                #    i.appendRow(Qt.QStandardItem(value))
-
-        
-        #    Server1                                      Server2
-        #["Parameters": ["temp", "ekrker", "efwer"], "Parameters2": ["qwkrk", "fkqk"]]
-
-
 
     def discover_servers(self):
+        if len(self.clients) > 0:
+            self.clients.clear()
+           
+            self.treeModel.removeRows(0, self.treeModel.rowCount())
+
         url = dsc.Server_Discovery()
         url.get_servers()
         self.SERVER_ARR = url.get_all(0)
         servers = url.get_all_as_address()
+        print(servers)
+        j = 0
         for i in servers:
-            self.clients.append(ui_c.Ui_client(i))
+            self.clients.append(cl_node.Client_nodes(i, self.SERVER_ARR[j]))
+            j += 1
 
-        for i in self.SERVER_ARR:
-            self.STANDARDITEM_ARR.append(Qt.QStandardItem(i))
-            
-        for j in range(len(self.SERVER_ARR)):
-            self.STANDARDITEM_ARR[j].setEditable(False)
-            self.rootNode.appendRow(self.STANDARDITEM_ARR[j])
-        
+        for i in self.clients:
+            self.rootNode.appendRow(i.ROOT_NODE)
+            i.ROOT_NODE.appendRow(i.FOLDER_NODE)
 
-        
-        self.create_model()
-
+            for j in i.MAP_VALUE_NODES.values():
+                for d in j:
+                    i.FOLDER_NODE[0].appendRow(d)
         
 
     

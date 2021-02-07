@@ -8,16 +8,6 @@ class Ui_client():
         self.client = Client("opc.tcp://" + server)
         self.servers = server
 
-    def establish_client_connection(self):
-
-        try:
-            self.client.connect()
-            print("client is connected: " + self.servers)
-
-        finally:
-            self.client.disconnect()
-
-
 
 def create_connection():
     url = disc.Server_Discovery()
