@@ -69,10 +69,6 @@ class Ui_MainWindow(object):
         self.right_verticalscrollbar.setGeometry(QtCore.QRect(1220, 28, 20, 320))
         self.right_verticalscrollbar.hide()
         self.right_verticalscrollbar.setObjectName("VerticalScrollbar_for_righttreeview")
-        self.verticalScrollBar = QtWidgets.QScrollBar(self.centralwidget)
-        self.verticalScrollBar.setGeometry(QtCore.QRect(320, 30, 20, 320))
-        self.verticalScrollBar.setOrientation(QtCore.Qt.Vertical)
-        self.verticalScrollBar.setObjectName("verticalScrollBar")
         self.Connect.raise_()
         self.Discover.raise_()
         self.lineEdit.raise_()
@@ -80,7 +76,6 @@ class Ui_MainWindow(object):
         self.pushButton.raise_()
         self.treeView.raise_()
         self.groupBox.raise_()  
-        self.verticalScrollBar.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 912, 21))
@@ -143,7 +138,6 @@ class Ui_MainWindow(object):
     def discover_servers(self):
         if len(self.clients) > 0:
             self.clients.clear()
-           
             self.treeModel.removeRows(0, self.treeModel.rowCount())
 
         url = dsc.Server_Discovery()
@@ -158,11 +152,15 @@ class Ui_MainWindow(object):
 
         for i in self.clients:
             self.rootNode.appendRow(i.ROOT_NODE)
-            i.ROOT_NODE.appendRow(i.FOLDER_NODE)
+            for j in i.FOLDER_NODE:
+                i.ROOT_NODE.appendRow(j)
 
+            t = 0
             for j in i.MAP_VALUE_NODES.values():
                 for d in j:
-                    i.FOLDER_NODE[0].appendRow(d)
+                    i.FOLDER_NODE[t].appendRow(d)
+                t += 1
+
         
 
     

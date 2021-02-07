@@ -20,7 +20,7 @@ class Client_nodes:
         self.Server = server
         self.client = Client("opc.tcp://" + server)
 
-        self.ROOT_NODE = StandardItem(self.server_name, 12, True, color=QtGui.QColor(128, 128, 128))
+        self.ROOT_NODE = StandardItem(self.server_name, 10, True)
         self.MAP_VALUE_NODES = {}
         self.FOLDER_NODE = []
 
@@ -29,7 +29,6 @@ class Client_nodes:
         try:
             self.client.connect()
             NODE_MAP.update(nav_nodes.get_name_from_nodes(nav_nodes.get_children_nodes(nav_nodes.get_root_nodes())))
-
         finally:
             self.client.disconnect()
 
@@ -37,7 +36,8 @@ class Client_nodes:
             for value in values:
                 if key not in self.MAP_VALUE_NODES:
                     self.MAP_VALUE_NODES[key] = list()
-                self.MAP_VALUE_NODES[key].append(StandardItem(value, 10))
+                self.MAP_VALUE_NODES[key].append(StandardItem(value, 8, color=QtGui.QColor(180, 180, 180)))
 
         for key in self.MAP_VALUE_NODES:
-                self.FOLDER_NODE.append(StandardItem(key))
+            print(key)
+            self.FOLDER_NODE.append(StandardItem(key, 9, color=QtGui.QColor(200, 200, 200)))
