@@ -7,6 +7,7 @@
 import asyncio
 import random
 from asyncua import ua, uamethod, Server
+import announce_service as sa
 
 SERVER_NAME = "RaspPI OPC UA Server"
 FLAT_NAME = SERVER_NAME.replace(" ", "")
@@ -47,5 +48,6 @@ class ServerPI:
 
 
 if __name__ == "__main__":
+    sa.start_service_announcement()
     sp = ServerPI()
     asyncio.run(sp.go())
