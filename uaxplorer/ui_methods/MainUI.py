@@ -15,7 +15,6 @@ import server_discovery as dsc
 import Ui_client as ui_c
 import client_nodes as cl_node
 import navigating_nodes as nav
-#from Ui_client import *
 import sys
 
 
@@ -23,52 +22,63 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         self.clients = list()
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(914, 513)
-        MainWindow.setStyleSheet("background-color: rgb(38, 38, 38);")
+        MainWindow.resize(1014, 513)
+        MainWindow.setStyleSheet("background-color: rgb(200, 200, 200;")
         self.centralwidget = QtWidgets.QWidget(MainWindow)
         self.centralwidget.setObjectName("centralwidget")
+
         self.Connect = QtWidgets.QPushButton(self.centralwidget)
-        self.Connect.setGeometry(QtCore.QRect(780, 0, 51, 21))
-        self.Connect.setStyleSheet("color: rgb(200, 200, 200);")
+        self.Connect.setGeometry(QtCore.QRect(780, 0, 81, 21))
+        self.Connect.setStyleSheet("color: rgb(0, 0, 0);")
+        self.Connect.clicked.connect(self.manual_connection)
         self.Connect.setObjectName("Connect")
+       
         self.Discover = QtWidgets.QPushButton(self.centralwidget)
         self.Discover.setGeometry(QtCore.QRect(690, 0, 81, 21))
-        self.Discover.setStyleSheet("color: rgb(200, 200, 200);")
+        self.Discover.setStyleSheet("color: rgb(0, 0, 0);")
         self.Discover.clicked.connect(self.discover_servers)
         self.Discover.setObjectName("Discover")
+
         self.lineEdit = QtWidgets.QLineEdit(self.centralwidget)
-        self.lineEdit.setGeometry(QtCore.QRect(0, 0, 681, 21))
-        self.lineEdit.setStyleSheet("color: rgb(200, 200, 200);")
+        self.lineEdit.setGeometry(QtCore.QRect(10, 0, 681, 21))
+        self.lineEdit.setStyleSheet("color: rgb(0, 0, 0);")
         self.lineEdit.setObjectName("lineEdit")
+
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
-        self.groupBox.setGeometry(QtCore.QRect(340, 20, 571, 331))
+        self.groupBox.setGeometry(QtCore.QRect(340, 20, 611, 331))
         self.groupBox.setFlat(False)
         self.groupBox.setCheckable(False)
         self.groupBox.setObjectName("groupBox")
-        self.groupBox.setStyleSheet("color: rgb(200,200,200);")
-        self.horizontalScrollBar = QtWidgets.QScrollBar(self.groupBox)
-        self.horizontalScrollBar.setGeometry(QtCore.QRect(0, 310, 571, 19))
-        self.horizontalScrollBar.setOrientation(QtCore.Qt.Horizontal)
-        self.horizontalScrollBar.setObjectName("horizontalScrollBar")
+        self.groupBox.setStyleSheet("color: rgb(0,0,0);")
+
+      
+
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
-        self.textBrowser.setGeometry(QtCore.QRect(0, 360, 911, 111))
+        self.textBrowser.setGeometry(QtCore.QRect(10, 360, 942, 111))
         self.textBrowser.setObjectName("textBrowser")
+
         self.pushButton = QtWidgets.QPushButton(self.centralwidget)
-        self.pushButton.setGeometry(QtCore.QRect(840, 0, 61, 21))
-        self.pushButton.setStyleSheet("color: rgb(200, 200, 200);")
+        self.pushButton.setGeometry(QtCore.QRect(870, 0, 81, 21))
+        self.pushButton.setStyleSheet("color: rgb(0, 0, 0);")
         self.pushButton.setObjectName("pushButton")
+
+        self.pairingbutton = QtWidgets.QPushButton(self.centralwidget)
+        self.pairingbutton.setGeometry(QtCore.QRect(960, 0, 81, 21))
+        self.pairingbutton.setStyleSheet("color: rgb(0, 0, 0);")
+        self.pairingbutton.setObjectName("pairButton")
+        self.pairingbutton.hide()
+
+        
+        
         self.treeView = QtWidgets.QTreeView(self.centralwidget)
         self.treeView.setGeometry(QtCore.QRect(10, 26, 331, 325))
         self.treeView.setObjectName("treeView")
+
         self.right_treeView = QtWidgets.QTreeView(self.centralwidget)
-        self.right_treeView.setGeometry(QtCore.QRect(910, 26, 331, 325))
+        self.right_treeView.setGeometry(QtCore.QRect(951, 26, 331, 325))
         self.right_treeView.setObjectName("Right_treeview")
         self.right_treeView.hide()
-        self.right_verticalscrollbar = QtWidgets.QScrollBar(self.centralwidget)
-        self.right_verticalscrollbar.setOrientation(QtCore.Qt.Vertical)
-        self.right_verticalscrollbar.setGeometry(QtCore.QRect(1220, 28, 20, 320))
-        self.right_verticalscrollbar.hide()
-        self.right_verticalscrollbar.setObjectName("VerticalScrollbar_for_righttreeview")
+
         self.Connect.raise_()
         self.Discover.raise_()
         self.lineEdit.raise_()
@@ -92,10 +102,23 @@ class Ui_MainWindow(object):
         self.menuView = QtWidgets.QMenu(self.menubar)
         self.menuView.setObjectName("menuView")
         MainWindow.setMenuBar(self.menubar)
+        self.closing_app = QtWidgets.QAction(MainWindow)
+        self.closing_app.setObjectName("Closing Application")
+        self.closing_app.setShortcut("CTRL+Q")
+        self.closing_app.triggered.connect(self.closing_application)
         self.actionRight_Hand_tree = QtWidgets.QAction(MainWindow)
         self.actionRight_Hand_tree.setObjectName("actionRight_Hand_tree")
+        self.actionRight_Hand_tree.setShortcut("CTRL+N")
         self.actionRight_Hand_tree.triggered.connect(self.creating_right_window)
+        self.hide_Right_Hand_tree = QtWidgets.QAction(MainWindow)
+        self.hide_Right_Hand_tree.setObjectName("Hiding tree")
+        self.hide_Right_Hand_tree.setShortcut("CTRL+M")
+        self.hide_Right_Hand_tree.triggered.connect(self.closing_right_window)
+ 
+        self.menuFile.addAction(self.closing_app)
         self.menuView.addAction(self.actionRight_Hand_tree)
+        self.menuView.addAction(self.hide_Right_Hand_tree)
+      
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuView.menuAction())
 
@@ -108,6 +131,7 @@ class Ui_MainWindow(object):
         self.treeView.setHeaderHidden(True)
         self.rootNode = self.treeModel.invisibleRootItem()
         self.treeView.setModel(self.treeModel)
+    
         
 
     def retranslateUi(self, MainWindow):
@@ -122,17 +146,50 @@ class Ui_MainWindow(object):
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;\"><br /></p></body></html>"))
         self.pushButton.setText(_translate("MainWindow", "Disconnect"))
+        self.pairingbutton.setText(_translate("MainWindow", "Pair"))
+      
         self.menuFile.setTitle(_translate("MainWindow", "File"))
         self.menuView.setTitle(_translate("MainWindow", "View"))
         self.actionRight_Hand_tree.setText(_translate("MainWindow", "Expand a right hand tree"))
+        self.hide_Right_Hand_tree.setText(_translate("MainWindow", "Hide the right hand tree"))
+        self.closing_app.setText(_translate("MainWindow", "Quit"))
 
+
+    def closing_application(self):
+        QtWidgets.qApp.quit()
+
+        
 
 
     def creating_right_window(self):
-        MainWindow.resize(1245, 513) # resizing the window to be able to fit the new treeview
-        self.textBrowser.resize(1241, 111) # making the textbox bigger to be able to display more information
+        MainWindow.resize(1300, 513) # resizing the window to be able to fit the new treeview
+        self.textBrowser.resize(1272, 111) # making the textbox bigger to be able to display more information
         self.right_treeView.show()
-        self.right_verticalscrollbar.show()
+        self.pairingbutton.show()    
+    
+
+    def closing_right_window(self):
+        self.right_treeView.hide()
+        self.textBrowser.resize(942, 111)
+        self.pairingbutton.hide()
+
+
+    def manual_connection(self):
+        manually_entered_server = self.lineEdit.text()
+        url = dsc.Server_Discovery()
+        url.get_servers()
+        servers = url.get_all_as_address()
+    
+        if manually_entered_server in servers:
+            self.textBrowser.append("Server:" + manually_entered_server + " found and connected.")
+        
+
+        else:
+            self.textBrowser.append("no server found")
+      
+        
+        
+      
 
 
     def discover_servers(self):
