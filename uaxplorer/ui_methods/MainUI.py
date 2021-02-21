@@ -14,9 +14,15 @@ from zeroconf import ServiceBrowser, Zeroconf
 import server_discovery as dsc
 import Ui_client as ui_c
 import client_nodes as cl_node
+from client_nodes import StandardItem as StItem
 import navigating_nodes as nav
 import sys
 
+class Node_storage:
+    def __init__(self, node_name, node_id, standarditem):
+        self.node_name = node_name
+        self.node_id = node_id
+        self.standarditem = standarditem
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -125,13 +131,27 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         
+       
         ############################### Discovery ################################
 
         self.treeModel = Qt.QStandardItemModel()
         self.treeView.setHeaderHidden(True)
         self.rootNode = self.treeModel.invisibleRootItem()
         self.treeView.setModel(self.treeModel)
-    
+        self.treeView.doubleClicked.connect(self.getValueLeft)
+
+        ###### Right hand tree #######
+        self.right_treeView.setModel(self.treeModel)
+        self.right_treeView.doubleClicked.connect(self.getValueRight)
+
+
+        ## LINKING ##
+        self.left_server = None
+        self.right_server = None
+
+        ## VARIABLES #####
+        self.ROOT_CHILDREN_NODES = []
+
         
 
     def retranslateUi(self, MainWindow):
@@ -158,8 +178,100 @@ class Ui_MainWindow(object):
     def closing_application(self):
         QtWidgets.qApp.quit()
 
+    
+    def getValueLeft(self, val):
+        node_name = val.data()
+        bool_continue = True
+        for i in self.clients:
+            if(i.server_name == node_name):
+                for k in i.NODE_ID:
+                    for j in self.ROOT_CHILDREN_NODES:
+                        i.client.connect()
+                        children_name = i.client.get_node(k).get_browse_name().__dict__['Name']
+                        if(children_name == j.node_name):
+                            bool_continue = False
+                            break
         
+        for i in self.clients:
+            for j in self.ROOT_CHILDREN_NODES:
+                if(node_name == j.node_name):
+                    i.client.connect()
+                    for d in i.client.get_node(j.node_id).get_children():
+                        children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
+                        print(children_name)
+                        for k in self.ROOT_CHILDREN_NODES:
+                            if(children_name == k.node_name):
+                                bool_continue = False
+                                break 
 
+        for i in self.clients:
+            if(i.server_name == node_name and bool_continue == True):
+                
+                for j in i.NODE_ID:
+                    i.client.connect()
+                    children_name = i.client.get_node(j).get_browse_name().__dict__['Name']
+                    qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
+                    i.ROOT_NODE.appendRow(qtitem)
+                    self.ROOT_CHILDREN_NODES.append(Node_storage(children_name, j, qtitem))
+
+    
+        for i in self.clients:
+            for j in self.ROOT_CHILDREN_NODES:
+                
+                if(node_name == j.node_name and bool_continue == True):
+                    
+                    i.client.connect()
+                    for d in i.client.get_node(j.node_id).get_children():
+                        #    printif(i.client.get_node(d).get_children() == 0):
+                        
+                        children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
+                        
+                        qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
+                        j.standarditem.appendRow(qtitem)
+                        self.ROOT_CHILDREN_NODES.append(Node_storage(children_name, d, qtitem))
+                            #self.treeView.selectedIndexes()[0].model().itemFromIndex(val).appendRow(StItem(children_name, 8, color=QtGui.QColor(180, 180, 180)))
+  
+
+    def LinkValueLeft(self, val):
+        if(val.parent()):
+            SERVER_NAME = val.data()
+
+        print(SERVER_NAME)
+        if(self.left_server == None and val.parent()):
+            for i in self.clients:
+                if(i.server_name == SERVER_NAME):
+                    self.left_server = i
+                    self.textBrowser.append("Linked server to the left to: " + SERVER_NAME)
+        else:
+            self.textBrowser.append("Unlinked server to the left for: " + SERVER_NAME)
+            self.left_server = None
+
+    def getValueRight(self, val):
+        if(val.parent()):
+            SERVER_NAME = val.data()
+
+        if(self.right_server == None and val.parent()):
+            for i in self.clients:
+                if(i.server_name == SERVER_NAME):
+                    self.right_server = i
+                    self.textBrowser.append("Linked server to the right to: " + SERVER_NAME)
+        else:
+            self.textBrowser.append("Unlinked server to the right for: " + SERVER_NAME)
+            self.right_server = None
+        #Left ix Pressure -> qx Pressure Right
+        #Left qx Temperature <- ix Temperature Right
+        if(self.right_server != None and self.left_server != None):
+            server1_lst = list([j for i in self.left_server.NODE_MAP.values() for j in i])
+            server2_lst = list([j for i in self.right_server.NODE_MAP.values() for j in i])
+            result1 = filter(lambda x: 'ix' in x, server1_lst)
+            result2 = filter(lambda x: 'qx' in x, server2_lst)  
+            print(list(result1))
+            print(list(result2))
+            
+           # for i,j in itertools.zip_longest(list([j for i in self.right_server.NODE_MAP.values() for j in i]), 
+            #        list([j for i in self.left_server.NODE_MAP.values() for j in i])):
+            #    print(i,j )
+            
 
     def creating_right_window(self):
         MainWindow.resize(1300, 513) # resizing the window to be able to fit the new treeview
@@ -201,22 +313,18 @@ class Ui_MainWindow(object):
         url.get_servers()
         self.SERVER_ARR = url.get_all(0)
         servers = url.get_all_as_address()
-        print(servers)
+        
+
         j = 0
         for i in servers:
             self.clients.append(cl_node.Client_nodes(i, self.SERVER_ARR[j]))
+            self.textBrowser.append("Service added: " + self.SERVER_ARR[j] + "- At address: " + i)
+
             j += 1
 
         for i in self.clients:
             self.rootNode.appendRow(i.ROOT_NODE)
-            for j in i.FOLDER_NODE:
-                i.ROOT_NODE.appendRow(j)
 
-            t = 0
-            for j in i.MAP_VALUE_NODES.values():
-                for d in j:
-                    i.FOLDER_NODE[t].appendRow(d)
-                t += 1
 
         
 
