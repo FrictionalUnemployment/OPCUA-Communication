@@ -87,10 +87,8 @@ class ServerPI:
         dev = await server.nodes.base_object_type.add_object_type(idx, FLAT_NAME)
 
         lFolder = await server.nodes.objects.add_folder(idx, "Sensors")
-        device = await server.nodes.objects.add_object(idx, "ZeDevice", dev)
 
-        zobj = await server.nodes.objects.add_object(idx, "ZeObject")
-        zvar = await zobj.add_variable(idx, "qxTemperature", self.temp)
+        zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
 
         endp = ua.Argument()
         endp.Name = "Endpoint"
