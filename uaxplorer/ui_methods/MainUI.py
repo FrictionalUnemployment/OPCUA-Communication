@@ -307,18 +307,9 @@ class Ui_MainWindow(object):
 
 
     def manual_connection(self):
-        manually_entered_server = self.lineEdit.text()
-        url = dsc.Server_Discovery()
-        url.get_servers()
-        servers = url.get_all_as_address()
-    
-        if manually_entered_server in servers:
-            self.textBrowser.append("Server:" + manually_entered_server + " found and connected.")
-        
-
-        else:
-            self.textBrowser.append("no server found")
-      
+       adress = self.lineEdit.text()
+       self.clients.append(cl_node.Client_nodes(adress, adress))
+       self.rootNode.appendRow(self.clients[-1].ROOT_NODE)
         
         
       
