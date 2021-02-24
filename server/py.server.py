@@ -10,7 +10,7 @@ server = Server()
 url = "opc.tcp://192.168.10.196:4840"
 server.set_endpoint(url)
 
-name = "Test for GUI"
+name = "vvvvvvvvvvvvvvv"
 
 addspace = server.register_namespace(name)
 

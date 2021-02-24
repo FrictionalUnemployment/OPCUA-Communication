@@ -19,7 +19,8 @@ import navigating_nodes as nav
 import sys
 
 class Node_storage:
-    def __init__(self, node_name, node_id, standarditem):
+    def __init__(self, server_name, node_name, node_id, standarditem):
+        self.server_name = server_name
         self.node_name = node_name
         self.node_id = node_id
         self.standarditem = standarditem
@@ -73,7 +74,7 @@ class Ui_MainWindow(object):
         self.pairingbutton.setStyleSheet("color: rgb(0, 0, 0);")
         self.pairingbutton.setObjectName("pairButton")
         self.pairingbutton.hide()
-
+        self.pairingbutton.clicked.connect(self.linking_servers)
         
         
         self.treeView = QtWidgets.QTreeView(self.centralwidget)
@@ -139,7 +140,6 @@ class Ui_MainWindow(object):
         self.rootNode = self.treeModel.invisibleRootItem()
         self.treeView.setModel(self.treeModel)
         self.treeView.doubleClicked.connect(self.getValueLeft)
-
         ###### Right hand tree #######
         self.right_treeView.setModel(self.treeModel)
         self.right_treeView.doubleClicked.connect(self.getValueRight)
@@ -178,59 +178,79 @@ class Ui_MainWindow(object):
     def closing_application(self):
         QtWidgets.qApp.quit()
 
+    def linking_servers(self):
+        server1 = None
+        server2 = None
+        for i in self.clients:
+            if(i.ROOT_NODE.checkState() == 2 and server1 == None):
+                server1 = i
+            if(i.ROOT_NODE.checkState() == 2 and i.server_name != server1.server_name):
+                server2 = i
+                print(server2.server_name)
+        print(server1.server_name)
+        
     
     def getValueLeft(self, val):
         node_name = val.data()
         bool_continue = True
-        for i in self.clients:
+        root = val.parent() #The root node of the node index that the user double clicks
+        
+        while(root.parent().data() != None): #We loop till we get None as data (We're at the end of the hierarchy)
+            root = root.parent() 
+        
+        for i in self.clients: #Loop through our servers and make sure it already isn't in the treeview
             if(i.server_name == node_name):
                 for k in i.NODE_ID:
+                    i.client.connect()
                     for j in self.ROOT_CHILDREN_NODES:
-                        i.client.connect()
+                        
                         children_name = i.client.get_node(k).get_browse_name().__dict__['Name']
                         if(children_name == j.node_name):
                             bool_continue = False
                             break
+                    i.client.disconnect()
         
-        for i in self.clients:
-            for j in self.ROOT_CHILDREN_NODES:
-                if(node_name == j.node_name):
-                    i.client.connect()
-                    for d in i.client.get_node(j.node_id).get_children():
-                        children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
-                        print(children_name)
-                        for k in self.ROOT_CHILDREN_NODES:
-                            if(children_name == k.node_name):
-                                bool_continue = False
-                                break 
+        for i in self.clients:  #Loop through our servers and make sure it already isn't in the treeview
+            if(root.data() == i.server_name):
+                for j in self.ROOT_CHILDREN_NODES:
+                    if(node_name == j.node_name):
+                       
+                        i.client.connect()
+                        for d in i.client.get_node(j.node_id).get_children():
+                            children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
+                            for k in self.ROOT_CHILDREN_NODES:
+                                if(children_name == k.node_name):
+                                    self.textBrowser.append("Children_name already exists!" + children_name +  k.node_name)
+                                    bool_continue = False
+                                    break 
+                        i.client.disconnect()
 
-        for i in self.clients:
+        for i in self.clients: #We add the first children to the root node
             if(i.server_name == node_name and bool_continue == True):
                 
                 for j in i.NODE_ID:
+                   
                     i.client.connect()
                     children_name = i.client.get_node(j).get_browse_name().__dict__['Name']
                     qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
                     i.ROOT_NODE.appendRow(qtitem)
-                    self.ROOT_CHILDREN_NODES.append(Node_storage(children_name, j, qtitem))
-
-    
-        for i in self.clients:
-            for j in self.ROOT_CHILDREN_NODES:
-                
-                if(node_name == j.node_name and bool_continue == True):
-                    
-                    i.client.connect()
-                    for d in i.client.get_node(j.node_id).get_children():
-                        #    printif(i.client.get_node(d).get_children() == 0):
-                        
-                        children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
-                        
-                        qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
-                        j.standarditem.appendRow(qtitem)
-                        self.ROOT_CHILDREN_NODES.append(Node_storage(children_name, d, qtitem))
-                            #self.treeView.selectedIndexes()[0].model().itemFromIndex(val).appendRow(StItem(children_name, 8, color=QtGui.QColor(180, 180, 180)))
-  
+                    server_name = node_name
+                    self.ROOT_CHILDREN_NODES.append(Node_storage(server_name,children_name, j, qtitem))
+                    i.client.disconnect()
+        
+       
+        for i in self.clients: #We add the first children to the first children of the root node (and etc)
+            if(root.data() == i.server_name):
+                for j in self.ROOT_CHILDREN_NODES:
+                    if(node_name == j.node_name and bool_continue == True):
+                        i.client.connect()
+                        for d in i.client.get_node(j.node_id).get_children():
+                            children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
+                            qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
+                            j.standarditem.appendRow(qtitem)
+                            server_name = self.treeView.selectedIndexes()[0].model().index(0, 0).data()
+                            self.ROOT_CHILDREN_NODES.append(Node_storage(server_name, children_name, d, qtitem))
+                        i.client.disconnect()
 
     def LinkValueLeft(self, val):
         if(val.parent()):
@@ -308,6 +328,9 @@ class Ui_MainWindow(object):
         if len(self.clients) > 0:
             self.clients.clear()
             self.treeModel.removeRows(0, self.treeModel.rowCount())
+
+        if len(self.ROOT_CHILDREN_NODES) > 0:
+            self.ROOT_CHILDREN_NODES.clear()
 
         url = dsc.Server_Discovery()
         url.get_servers()
