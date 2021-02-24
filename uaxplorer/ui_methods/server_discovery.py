@@ -23,7 +23,7 @@ class Server_Discovery():
         while(time.time() < time_to_end):
             if(len(d.get_services()) > 0):
                 self.DISCOVERY_OUTPUT = d.get_services()
-
+    
         return self.DISCOVERY_OUTPUT
 
     def get_all(self, type): #0 for server name, 1 for ip address, 2 for port number

@@ -115,9 +115,12 @@ async def main():
     #We want to find the OPC-DA server nodes in aliases
     nodes_list = da.list('*', recursive=True) #A list of dot-delimited strings
     await sort_nodes_list(nodes_list, idx, root, da)
+
+    
     
     try:
         async with server: #Starting the server
+            
             handler = SubHandler() #Subscribing to datachanges coming from the UA clients
             sub = await server.create_subscription(500, handler)
             handle = await sub.subscribe_data_change(writeable_variables.values())

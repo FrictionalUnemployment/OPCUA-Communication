@@ -8,7 +8,6 @@ class Ui_client():
         self.client = Client("opc.tcp://" + server)
         self.servers = server
 
-
 def create_connection():
     url = disc.Server_Discovery()
     url.get_servers()
