@@ -15,10 +15,6 @@ SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840"
 UA_NAMESPACE = "hvproj:ua:"+FLAT_NAME
 TEMP = 19
 
-client = None
-handler = SubHandler()
-sub = None
-handle = None
 
 # This ua method is used to subscribe to a variable on
 # another server.
@@ -45,6 +41,8 @@ def subscribe(parent, endpoint, qx, ix):
         sub = client.create_subscription(500, handler)
         handle = sub.subscribe_data_change(qxvar)
         time.sleep(0.1)
+    except:
+        return False
 
     return True
 
@@ -61,6 +59,11 @@ class SubHandler():
 
     def event_notification(self, event):
         print("Python: New event", event)
+
+client = None
+handler = SubHandler()
+sub = None
+handle = None
 
 
 class ServerPI:
@@ -91,7 +94,7 @@ class ServerPI:
 
         endp = ua.Argument()
         endp.Name = "Endpoint"
-        endp.DataType = ua.NodeId(ua.ObjectIDs.String)
+        endp.DataType = ua.NodeId(ua.ObjectIds.String)
         endp.ValueRank = -1
         endp.ArrayDimensions = []
         endp.Description = ua.LocalizedText("Address to endpoint")
