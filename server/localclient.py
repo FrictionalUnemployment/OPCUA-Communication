@@ -26,3 +26,5 @@ class LocalClient():
     def get_value(self, name):
         return self.values[name])
 
+if __name__=="__main__":
+    c = LocalClient()

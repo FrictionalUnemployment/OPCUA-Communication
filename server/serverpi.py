@@ -11,14 +11,21 @@ import announce_service as sa
 
 SERVER_NAME = "RaspPI OPC UA Server"
 FLAT_NAME = SERVER_NAME.replace(" ", "")
-SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840/raspua/server"
+SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840"
 UA_NAMESPACE = "hvproj:ua:"+FLAT_NAME
 TEMP = 19
+
+def subscribe(endpoint, qx, ix):
+
+
+class SubHandler():
+    pass
 
 class ServerPI:
 
     def __init__(self):
         self.temp = TEMP
+        self.clients = []
 
     async def go(self):
         server = Server()
