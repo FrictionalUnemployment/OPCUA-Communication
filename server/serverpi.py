@@ -15,7 +15,18 @@ SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840"
 UA_NAMESPACE = "hvproj:ua:"+FLAT_NAME
 TEMP = 19
 
-def subscribe(endpoint, qx, ix):
+# This ua method is used to subscribe to a variable on
+# another server.
+# Inputs:
+# endpoint(string): the path to server to subscribe from.
+# qx(string): The variable to subscribe to
+# ix(string): The variable to connect subscription to
+# Returns a Boolean value, depending on if the subscription
+# was successful or not.
+@uamethod
+def subscribe(parent, endpoint, qx, ix):
+    
+    return True
 
 
 class SubHandler():
@@ -46,6 +57,34 @@ class ServerPI:
 
         zobj = await server.nodes.objects.add_object(idx, "ZeObject")
         zvar = await zobj.add_variable(idx, "Temperature", self.temp)
+
+        endp = ua.Argument()
+        endp.Name = "Endpoint"
+        endp.DataType = ua.NodeId(ua.ObjectIDs.String)
+        endp.ValueRank = -1
+        endp.ArrayDimensions = []
+        endp.Description = ua.LocalizedText("Address to endpoint")
+        qxvar = ua.Argument()
+        qxvar.Name = "qx"
+        qxvar.DataType = ua.NodeId(ua.ObjectIds.String)
+        qxvar.ValueRank = -1
+        qxvar.ArrayDimensions = []
+        qxvar.Description = ua.LocalizedText("Output variable to connect to server.")
+        ixvar = ua.Argument()
+        ixvar.Name = "ix"
+        ixvar.DataType = ua.NodeId(ua.ObjectIds.String)
+        ixvar.ValueRank = -1
+        ixvar.ArrayDimensions = []
+        ixvar. Description = ua.LocalizedText("Input variable that is to be connected to.")
+        res = ua.Argument()
+        res.Name = "Result"
+        res.DataType = ua.NodeId(ua.ObjectIds.Boolean)
+        res.ValueRank = -1
+        res.ArrayDimensions = []
+        res.Description = ua.LocalizedText("Result if variable was connected or not.")
+
+
+        submethod = zobj.add_method(idx, "subscribe", subscribe, [endp, qxvar, ixvar], [res])
 
         async with server:
             while True:
