@@ -15,6 +15,11 @@ SERVER_ENDPOINT = "opc.tcp://0.0.0.0:4840"
 UA_NAMESPACE = "hvproj:ua:"+FLAT_NAME
 TEMP = 19
 
+client = None
+handler = SubHandler()
+sub = None
+handle = None
+
 # This ua method is used to subscribe to a variable on
 # another server.
 # Inputs:
@@ -25,12 +30,38 @@ TEMP = 19
 # was successful or not.
 @uamethod
 def subscribe(parent, endpoint, qx, ix):
-    
+    client = Client(endpoint)
+    try:
+        client.connect()
+        client.load_type_definitions()
+
+        #root = client.get_root_node()
+
+        #uri = "http://examples.freeopcua.github.io"
+        #idx = client.get_namespace_index(uri)
+
+        qxvar = client.get_node(qx)
+
+        sub = client.create_subscription(500, handler)
+        handle = sub.subscribe_data_change(qxvar)
+        time.sleep(0.1)
+
     return True
 
-
 class SubHandler():
-    pass
+    """
+    Subscription Handler. To receive events from server for a subscription
+    data_change and event methods are called directly from receiving thread.
+    Do not do expensive, slow or network operation there. Create another 
+    thread if you need to do such a thing
+    """
+
+    def datachange_notification(self, node, val, data):
+        print("Python: New data change event", node, val)
+
+    def event_notification(self, event):
+        print("Python: New event", event)
+
 
 class ServerPI:
 
@@ -56,7 +87,7 @@ class ServerPI:
         device = await server.nodes.objects.add_object(idx, "ZeDevice", dev)
 
         zobj = await server.nodes.objects.add_object(idx, "ZeObject")
-        zvar = await zobj.add_variable(idx, "Temperature", self.temp)
+        zvar = await zobj.add_variable(idx, "qxTemperature", self.temp)
 
         endp = ua.Argument()
         endp.Name = "Endpoint"
