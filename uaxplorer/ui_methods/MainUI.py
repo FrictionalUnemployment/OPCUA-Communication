@@ -145,10 +145,6 @@ class Ui_MainWindow(object):
         self.right_treeView.doubleClicked.connect(self.getValueRight)
 
 
-        ## LINKING ##
-        self.left_server = None
-        self.right_server = None
-
         ## VARIABLES #####
         self.ROOT_CHILDREN_NODES = []
 
@@ -184,10 +180,22 @@ class Ui_MainWindow(object):
         for i in self.clients:
             if(i.ROOT_NODE.checkState() == 2 and server1 == None):
                 server1 = i
+                self.textBrowser.append("Linked server 1: " + i.server_name)
             if(i.ROOT_NODE.checkState() == 2 and i.server_name != server1.server_name):
                 server2 = i
+                self.textBrowser.append("Linked server 2: " + i.server_name)
                 print(server2.server_name)
         print(server1.server_name)
+       
+
+       
+        if(self.right_server != None and self.left_server != None):
+            server1_lst = list([j for i in self.left_server.NODE_MAP.values() for j in i])
+            server2_lst = list([j for i in self.right_server.NODE_MAP.values() for j in i])
+            result1 = filter(lambda x: 'ix' in x, server1_lst)
+            result2 = filter(lambda x: 'qx' in x, server2_lst)  
+            print(list(result1))
+            print(list(result2))
         
     
     def getValueLeft(self, val):
@@ -254,46 +262,6 @@ class Ui_MainWindow(object):
                             self.ROOT_CHILDREN_NODES.append(Node_storage(server_name, children_name, d, qtitem))
                         i.client.disconnect()
 
-    def LinkValueLeft(self, val):
-        if(val.parent()):
-            SERVER_NAME = val.data()
-
-        print(SERVER_NAME)
-        if(self.left_server == None and val.parent()):
-            for i in self.clients:
-                if(i.server_name == SERVER_NAME):
-                    self.left_server = i
-                    self.textBrowser.append("Linked server to the left to: " + SERVER_NAME)
-        else:
-            self.textBrowser.append("Unlinked server to the left for: " + SERVER_NAME)
-            self.left_server = None
-
-    def getValueRight(self, val):
-        if(val.parent()):
-            SERVER_NAME = val.data()
-
-        if(self.right_server == None and val.parent()):
-            for i in self.clients:
-                if(i.server_name == SERVER_NAME):
-                    self.right_server = i
-                    self.textBrowser.append("Linked server to the right to: " + SERVER_NAME)
-        else:
-            self.textBrowser.append("Unlinked server to the right for: " + SERVER_NAME)
-            self.right_server = None
-        #Left ix Pressure -> qx Pressure Right
-        #Left qx Temperature <- ix Temperature Right
-        if(self.right_server != None and self.left_server != None):
-            server1_lst = list([j for i in self.left_server.NODE_MAP.values() for j in i])
-            server2_lst = list([j for i in self.right_server.NODE_MAP.values() for j in i])
-            result1 = filter(lambda x: 'ix' in x, server1_lst)
-            result2 = filter(lambda x: 'qx' in x, server2_lst)  
-            print(list(result1))
-            print(list(result2))
-            
-           # for i,j in itertools.zip_longest(list([j for i in self.right_server.NODE_MAP.values() for j in i]), 
-            #        list([j for i in self.left_server.NODE_MAP.values() for j in i])):
-            #    print(i,j )
-            
 
     def creating_right_window(self):
         MainWindow.resize(1300, 513) # resizing the window to be able to fit the new treeview
