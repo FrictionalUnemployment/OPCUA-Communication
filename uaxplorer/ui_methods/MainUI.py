@@ -203,18 +203,18 @@ class Ui_MainWindow(object):
                 for k in i.NODE_ID:
                     i.client.connect()
                     for j in self.ROOT_CHILDREN_NODES:
-                        
-                        children_name = i.client.get_node(k).get_browse_name().__dict__['Name']
-                        if(children_name == j.node_name):
-                            bool_continue = False
-                            break
+                        if(i.server_name == j.server_name):
+                            children_name = i.client.get_node(k).get_browse_name().__dict__['Name']
+                            if(children_name == j.node_name):
+                                bool_continue = False
+                                break
                     i.client.disconnect()
         
         for i in self.clients:  #Loop through our servers and make sure it already isn't in the treeview
             if(root.data() == i.server_name):
                 for j in self.ROOT_CHILDREN_NODES:
-                    if(node_name == j.node_name):
-                       
+                    if(node_name == j.node_name and root.data() == j.server_name):
+                        
                         i.client.connect()
                         for d in i.client.get_node(j.node_id).get_children():
                             children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
@@ -241,14 +241,16 @@ class Ui_MainWindow(object):
        
         for i in self.clients: #We add the first children to the first children of the root node (and etc)
             if(root.data() == i.server_name):
+             
                 for j in self.ROOT_CHILDREN_NODES:
-                    if(node_name == j.node_name and bool_continue == True):
+                    if(node_name == j.node_name and root.data() == j.server_name and bool_continue == True):
+                        
                         i.client.connect()
                         for d in i.client.get_node(j.node_id).get_children():
                             children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
                             qtitem = StItem(children_name, 8, color=QtGui.QColor(180, 180, 180))
                             j.standarditem.appendRow(qtitem)
-                            server_name = self.treeView.selectedIndexes()[0].model().index(0, 0).data()
+                            server_name = root.data()
                             self.ROOT_CHILDREN_NODES.append(Node_storage(server_name, children_name, d, qtitem))
                         i.client.disconnect()
 
@@ -310,6 +312,7 @@ class Ui_MainWindow(object):
        adress = self.lineEdit.text()
        self.clients.append(cl_node.Client_nodes(adress, adress))
        self.rootNode.appendRow(self.clients[-1].ROOT_NODE)
+       self.textBrowser.append("Manually added service: " + adress + " !Note: name will be set to the address:port!")
         
         
       
