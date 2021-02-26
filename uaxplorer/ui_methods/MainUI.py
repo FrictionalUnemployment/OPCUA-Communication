@@ -142,7 +142,7 @@ class Ui_MainWindow(object):
         self.treeView.doubleClicked.connect(self.getValueLeft)
         ###### Right hand tree #######
         self.right_treeView.setModel(self.treeModel)
-        self.right_treeView.doubleClicked.connect(self.getValueRight)
+        self.right_treeView.doubleClicked.connect(self.getValueLeft)
 
 
         ## VARIABLES #####
@@ -177,25 +177,41 @@ class Ui_MainWindow(object):
     def linking_servers(self):
         server1 = None
         server2 = None
+        nav1 = None
+        nav2 = None
         for i in self.clients:
             if(i.ROOT_NODE.checkState() == 2 and server1 == None):
                 server1 = i
+                i.client.connect()
+                n = nav.Navigating_nodes(i.client)
+                nav1 = n.get_children_nodes_name(n.get_root_nodes())
+                i.client.disconnect()
                 self.textBrowser.append("Linked server 1: " + i.server_name)
             if(i.ROOT_NODE.checkState() == 2 and i.server_name != server1.server_name):
                 server2 = i
+                i.client.connect()
+                n = nav.Navigating_nodes(i.client)
+                nav2 = n.get_children_nodes_name(n.get_root_nodes())
+                i.client.disconnect()
                 self.textBrowser.append("Linked server 2: " + i.server_name)
-                print(server2.server_name)
-        print(server1.server_name)
-       
+     
+        
+        if(server2 != None and server1 != None):
+            for dict1_key, dict1_values in nav1.items():
+                for value in dict1_values:
+                  
+                    for key2,values2 in nav2.items():
+                        
+                        for value2 in values2:
+                       
+                            if value[2:] == value2[2:]:
+                                print(value, value2, dict1_key, key2)
+        
+        server1.client.connect()
+        f = server1.client.get_objects_node().get_children()
+        for i in f:
+            print(server1.client.get_node(i).get_browse_name())
 
-       
-        if(self.right_server != None and self.left_server != None):
-            server1_lst = list([j for i in self.left_server.NODE_MAP.values() for j in i])
-            server2_lst = list([j for i in self.right_server.NODE_MAP.values() for j in i])
-            result1 = filter(lambda x: 'ix' in x, server1_lst)
-            result2 = filter(lambda x: 'qx' in x, server2_lst)  
-            print(list(result1))
-            print(list(result2))
         
     
     def getValueLeft(self, val):
