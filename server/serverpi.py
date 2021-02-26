@@ -6,7 +6,8 @@
 
 import asyncio
 import random
-from asyncua import ua, uamethod, Server
+import time
+from asyncua import ua, uamethod, Server, Client
 import announce_service as sa
 
 SERVER_NAME = "RaspPI OPC UA Server"
@@ -87,6 +88,7 @@ class ServerPI:
         dev = await server.nodes.base_object_type.add_object_type(idx, FLAT_NAME)
 
         lFolder = await server.nodes.objects.add_folder(idx, "Sensors")
+        zobj = await server.nodes.objects.add_object(idx, "methods")
 
         zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
 
