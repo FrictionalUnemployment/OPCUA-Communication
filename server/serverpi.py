@@ -100,13 +100,13 @@ class ServerPI:
         endp.Description = ua.LocalizedText("Address to endpoint")
         qxvar = ua.Argument()
         qxvar.Name = "qx"
-        qxvar.DataType = ua.NodeId(ua.ObjectIds.Node)
+        qxvar.DataType = ua.NodeId(ua.ObjectIds.String)
         qxvar.ValueRank = -1
         qxvar.ArrayDimensions = []
         qxvar.Description = ua.LocalizedText("Output variable to connect to server.")
         ixvar = ua.Argument()
         ixvar.Name = "ix"
-        ixvar.DataType = ua.NodeId(ua.ObjectIds.Node)
+        ixvar.DataType = ua.NodeId(ua.ObjectIds.String)
         ixvar.ValueRank = -1
         ixvar.ArrayDimensions = []
         ixvar. Description = ua.LocalizedText("Input variable that is to be connected to.")
@@ -128,6 +128,6 @@ class ServerPI:
 
 
 if __name__ == "__main__":
-    sa.start_service_announcement()
+    sa.start_service_announcement(device_name="kfd347-server.", iport=4840)
     sp = ServerPI()
     asyncio.run(sp.go())
