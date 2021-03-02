@@ -100,13 +100,13 @@ class ServerPI:
         endp.Description = ua.LocalizedText("Address to endpoint")
         qxvar = ua.Argument()
         qxvar.Name = "qx"
-        qxvar.DataType = ua.NodeId(ua.ObjectIds.String)
+        qxvar.DataType = ua.NodeId(ua.ObjectIds.Node)
         qxvar.ValueRank = -1
         qxvar.ArrayDimensions = []
         qxvar.Description = ua.LocalizedText("Output variable to connect to server.")
         ixvar = ua.Argument()
         ixvar.Name = "ix"
-        ixvar.DataType = ua.NodeId(ua.ObjectIds.String)
+        ixvar.DataType = ua.NodeId(ua.ObjectIds.Node)
         ixvar.ValueRank = -1
         ixvar.ArrayDimensions = []
         ixvar. Description = ua.LocalizedText("Input variable that is to be connected to.")
