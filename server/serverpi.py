@@ -28,13 +28,13 @@ TEMP = 19
 # Returns a Boolean value, depending on if the subscription
 # was successful or not.
 @uamethod
-def subscribe(parent, endpoint, qx, ix):
+async def subscribe(parent, endpoint, qx, ix):
     print("Inside subscribe!")
-    #client = Client(str(endpoint))
+    client = Client(str(endpoint))
     try:
         print("Try to connect")
-        #client.connect()
-        #client.load_type_definitions()
+        await client.connect()
+        client.load_type_definitions()
         print("Before get node")
 
         #root = client.get_root_node()
@@ -48,6 +48,7 @@ def subscribe(parent, endpoint, qx, ix):
         #sub = client.create_subscription(500, handler)
         #handle = sub.subscribe_data_change(qxvar)
         time.sleep(0.1)
+        await client.disconnect()
     except:
         pass
 
