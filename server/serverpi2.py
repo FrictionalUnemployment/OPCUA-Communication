@@ -127,7 +127,7 @@ class ServerPI:
 
         async with server:
             while True:
-                await asyncio.sleep(2)
+                await asyncio.sleep(5)
                 await zvar.write_value(self.temp)
                 self.temp = 19 + random.random()
                 print(self.temp)

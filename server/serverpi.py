@@ -19,42 +19,6 @@ DISCOVERY_NAME="_"+FLAT_NAME[:10]+"."
 TEMP = 19
 
 
-# This ua method is used to subscribe to a variable on
-# another server.
-# Inputs:
-# endpoint(string): the path to server to subscribe from.
-# qx(string): The variable to subscribe to
-# ix(string): The variable to connect subscription to
-# Returns a Boolean value, depending on if the subscription
-# was successful or not.
-@uamethod
-async def subscribe(parent, endpoint, qx, ix):
-    print("Inside subscribe!")
-    client = Client(str(endpoint))
-    try:
-        print("Try to connect")
-        await client.connect()
-        client.load_type_definitions()
-        print("Before get node")
-
-        #root = client.get_root_node()
-
-        #uri = "http://examples.freeopcua.github.io"
-        #idx = client.get_namespace_index(uri)
-        print("This is qx: ", qx)
-        qxvar = client.get_node(qx)
-        print("After get node")
-
-        print("Creating subscription here.")
-        sub = await client.create_subscription(500, handler)
-        print("Trying to subscribe to variable here!")
-        handle = await sub.subscribe_data_change(qxvar)
-        time.sleep(0.1)
-        #await client.disconnect()
-        #print("Disconnected from client!")
-        print("end of sub method but not disconnected")
-    except:
-        pass
 
 class SubHandler():
     """
@@ -80,7 +44,48 @@ class ServerPI:
 
     def __init__(self):
         self.temp = TEMP
-        self.clients = []
+        self.clients = {}
+    
+    # This ua method is used to subscribe to a variable on
+    # another server.
+    # Inputs:
+    # endpoint(Server url as string): the path to server to subscribe from.
+    # qx(NodeId in string format): The variable to subscribe to
+    # ix(NodeId in string fromat): The variable to connect subscription to
+    # Returns void.
+    @uamethod
+    async def subscribe(self, parent, endpoint, qx, ix):
+        server = str(endpoint)
+        if server not in self.clients:
+            try:
+                print("Try to connect")
+                client = Client(server)
+                await client.connect()
+                await client.load_data_type_definitions()
+                self.clients[server] = (client,set())
+            except:
+                pass
+        else:
+            client = self.clients[server][0]
+
+        #root = client.get_root_node(
+        #uri = "http://examples.freeopcua.github.io"
+        #idx = client.get_namespace_index(uri)
+        qxvar = client.get_node(qx)
+        if qx not in self.clients[server][1]:
+            self.clients[server][1].add(qx)
+            print(len(self.clients[server][1]))
+            sub = await client.create_subscription(500, handler)
+            handle = await sub.subscribe_data_change(qxvar)
+        time.sleep(0.1)
+            
+    def method_var(self, name, description):
+        arg = ua.Argument()
+        arg.Name = name
+        arg.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
+        endp.ValueRank = -1
+        endp.ArrayDimensions = []
+        endp.Description = ua.LocalizedText(description)
 
     async def go(self):
         server = Server()
@@ -106,32 +111,11 @@ class ServerPI:
         zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
         print("Temp var: ", zvar)
 
-        endp = ua.Argument()
-        endp.Name = "Endpoint"
-        endp.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
-        endp.ValueRank = -1
-        endp.ArrayDimensions = []
-        endp.Description = ua.LocalizedText("Address to endpoint")
-        qxvar = ua.Argument()
-        qxvar.Name = "qx"
-        qxvar.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
-        qxvar.ValueRank = -1
-        qxvar.ArrayDimensions = []
-        qxvar.Description = ua.LocalizedText("Output variable to connect to server.")
-        ixvar = ua.Argument()
-        ixvar.Name = "ix"
-        ixvar.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
-        ixvar.ValueRank = -1
-        ixvar.ArrayDimensions = []
-        ixvar. Description = ua.LocalizedText("Input variable that is to be connected to.")
-        res = ua.Argument()
-        res.Name = "Result"
-        res.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
-        res.ValueRank = -1
-        res.ArrayDimensions = []
-        res.Description = ua.LocalizedText("Result if variable was connected or not.")
+        endp = self.method_var("Endpoint", "Address to tendpoint")
+        qxvar = self.method_var("qx", "Output variable to connect to server.")
+        ixvar = self.method_var("ix", "Input variable that is to be connected to.")
 
-        await zobj.add_method(idx, "subscribe", subscribe, [endp, qxvar, ixvar], [])
+        await zobj.add_method(idx, "subscribe", self.subscribe, [endp, qxvar, ixvar], [])
 
         async with server:
             while True:
