@@ -96,7 +96,7 @@ class ServerPI:
         lFolder = await objects.add_folder(idx, "Sensors")
         zobj = await objects.add_object(idx, "Methods")
 
-        zvar = await lFolder.add_variable(idx, "ixTemperature", self.temp)
+        zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
 
         endp = ua.Argument()
         endp.Name = "Endpoint"

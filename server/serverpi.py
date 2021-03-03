@@ -58,19 +58,13 @@ class ServerPI:
         server = str(endpoint)
         if server not in self.clients:
             try:
-                print("Try to connect")
                 client = Client(server)
-                print("Created Client")
                 await client.connect()
-                print("Connected")
                 await client.load_data_type_definitions()
-                print("loaded data etc...")
                 self.clients[server] = (client,set())
-                print("Connected")
             except:
                 return "Could not reach the server specified."
         else:
-            print("Already connected")
             client = self.clients[server][0]
 
         #root = client.get_root_node(
@@ -116,7 +110,7 @@ class ServerPI:
         zobj = await objects.add_object(idx, "Methods")
         print("Methods object:", zobj)
 
-        zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
+        zvar = await lFolder.add_variable(idx, "ixTemperature", self.temp)
         print("Temp var: ", zvar)
 
         endp = self.method_var("Endpoint", "Address to tendpoint")
