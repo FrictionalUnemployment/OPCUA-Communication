@@ -60,17 +60,23 @@ class ServerPI:
             try:
                 print("Try to connect")
                 client = Client(server)
+                print("Created Client")
                 await client.connect()
+                print("Connected")
                 await client.load_data_type_definitions()
+                print("loaded data etc...")
                 self.clients[server] = (client,set())
+                print("Connected")
             except:
-                pass
+                return "Could not reach the server specified."
         else:
+            print("Already connected")
             client = self.clients[server][0]
 
         #root = client.get_root_node(
         #uri = "http://examples.freeopcua.github.io"
         #idx = client.get_namespace_index(uri)
+
         qxvar = client.get_node(qx)
         if qx not in self.clients[server][1]:
             self.clients[server][1].add(qx)
@@ -78,14 +84,16 @@ class ServerPI:
             sub = await client.create_subscription(500, handler)
             handle = await sub.subscribe_data_change(qxvar)
         time.sleep(0.1)
+        return "Successfully subscribed to the specified variable!"
             
     def method_var(self, name, description):
         arg = ua.Argument()
         arg.Name = name
         arg.DataType = ua.NodeId(ua.ObjectIds.Int64) #NodeId, and not datatype of value. We use Int64 ID's.
-        endp.ValueRank = -1
-        endp.ArrayDimensions = []
-        endp.Description = ua.LocalizedText(description)
+        arg.ValueRank = -1
+        arg.ArrayDimensions = []
+        arg.Description = ua.LocalizedText(description)
+        return arg
 
     async def go(self):
         server = Server()
@@ -114,8 +122,9 @@ class ServerPI:
         endp = self.method_var("Endpoint", "Address to tendpoint")
         qxvar = self.method_var("qx", "Output variable to connect to server.")
         ixvar = self.method_var("ix", "Input variable that is to be connected to.")
+        ret = self.method_var("ret", "Return message for information of what happend.")
 
-        await zobj.add_method(idx, "subscribe", self.subscribe, [endp, qxvar, ixvar], [])
+        await zobj.add_method(idx, "subscribe", self.subscribe, [endp, qxvar, ixvar], [ret])
 
         async with server:
             while True:

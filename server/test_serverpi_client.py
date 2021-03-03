@@ -51,8 +51,8 @@ async def main():
         # await sub.delete()
         print("Here be calling da meffod!")
         # calling a method on server
-        await obj.call_method("2:subscribe", "opc.tcp://0.0.0.0:4841", "ns=2;i=3", "ixtemp")
-        print("Hejsan res")
+        ret = await obj.call_method("2:subscribe", "opc.tcp://0.0.0.0:4841", "ns=2;i=3", "ixtemp")
+        print(ret)
 
 
 if __name__ == "__main__":
