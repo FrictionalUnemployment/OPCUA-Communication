@@ -199,20 +199,35 @@ class Ui_MainWindow(object):
         if(server2 != None and server1 != None):
             for dict1_key, dict1_values in nav1.items():
                 for value in dict1_values:
-                  
                     for key2,values2 in nav2.items():
-                        
                         for value2 in values2:
-                       
                             if value[2:] == value2[2:]:
-                                print(value, value2, dict1_key, key2)
+                                #print(value, value2)
+                                if 'ix' in value and 'qx' in value2:
+                                    server1.client.connect()
+                                    get_obj = server1.client.get_objects_node().get_children()
+                                    for i in get_obj:
+                                        function_name = server1.client.get_node(i).get_display_name()._text
+                                        print(function_name)
+                                        if('Methods' == function_name):
+                                            bl = server1.client.get_node(i).call_method("2:subscribe","opc.tcp://" + server2.Server, str(dict1_key), str(key2))
+                                            print(bl, "Hi")
+                                    server1.client.disconnect()
+                                if 'qx' in value and 'ix' in value2:
+                                    server2.client.connect()
+                                    get_obj = server2.client.get_objects_node().get_children()
+                                    for i in get_obj:
+                                        function_name = server2.client.get_node(i).get_display_name()._text
+                                        
+                                        if('Methods' == function_name):    
+                                            bl = server1.client.get_node(i).call_method("2:subscribe","opc.tcp://" + server1.Server, str(key2), str(dict1_key))
+                                    server2.client.disconnect()
         
-        server1.client.connect()
-        f = server1.client.get_objects_node().get_children()
-        for i in f:
-            print(server1.client.get_node(i).get_browse_name())
-
-        
+        #server1.client.connect()
+        #f = server1.client.get_objects_node().get_children()
+        #for i in f:
+        #    kkk = server1.client.get_node(i).get_display_name().__dict__['_text']
+       #     print(server1.client.get_node(i).get_display_name()._text)
     
     def getValueLeft(self, val):
         node_name = val.data()
@@ -238,13 +253,12 @@ class Ui_MainWindow(object):
             if(root.data() == i.server_name):
                 for j in self.ROOT_CHILDREN_NODES:
                     if(node_name == j.node_name and root.data() == j.server_name):
-                        
                         i.client.connect()
                         for d in i.client.get_node(j.node_id).get_children():
                             children_name = i.client.get_node(d).get_browse_name().__dict__['Name']
                             for k in self.ROOT_CHILDREN_NODES:
-                                if(children_name == k.node_name):
-                                    self.textBrowser.append("Children_name already exists!" + children_name +  k.node_name)
+                                if(children_name == k.node_name and root.data() == k.server_name):
+                                    self.textBrowser.append("Children_name already exists! " + children_name + " " +  k.node_name)
                                     bool_continue = False
                                     break 
                         i.client.disconnect()
