@@ -41,14 +41,18 @@ async def subscribe(parent, endpoint, qx, ix):
 
         #uri = "http://examples.freeopcua.github.io"
         #idx = client.get_namespace_index(uri)
-
-        #qxvar = client.get_node(qx)
+        print("This is qx: ", qx)
+        qxvar = client.get_node(qx)
         print("After get node")
 
-        #sub = client.create_subscription(500, handler)
-        #handle = sub.subscribe_data_change(qxvar)
+        print("Creating subscription here.")
+        sub = await client.create_subscription(500, handler)
+        print("Trying to subscribe to variable here!")
+        handle = await sub.subscribe_data_change(qxvar)
         time.sleep(0.1)
-        await client.disconnect()
+        #await client.disconnect()
+        #print("Disconnected from client!")
+        print("end of sub method but not disconnected")
     except:
         pass
 
@@ -95,9 +99,12 @@ class ServerPI:
         #dev = await server.nodes.base_object_type.add_object_type(idx, FLAT_NAME)
 
         lFolder = await objects.add_folder(idx, "Sensors")
+        print("Sensors folder: ", lFolder)
         zobj = await objects.add_object(idx, "Methods")
+        print("Methods object:", zobj)
 
         zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
+        print("Temp var: ", zvar)
 
         endp = ua.Argument()
         endp.Name = "Endpoint"
