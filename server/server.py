@@ -1,14 +1,19 @@
 #!/usr/bin/env python
-#Credits to http://courses.compute.dtu.dk/02619/software/opcda_to_opcua.py
-#Helped with the conversion of OPCDA to OPCUA
+# Credits to http://courses.compute.dtu.dk/02619/software/opcda_to_opcua.py
+# Helped with the conversion of OPCDA to OPCUA
 
-import sys, asyncio, OpenOPC, decimal, time, pywintypes
+import sys
+import asyncio
+import OpenOPC
+import decimal
+import time
+import pywintypes
 from datetime import datetime
 from asyncua import ua, Server, uamethod
 from zeroconf import ServiceInfo, Zeroconf
 import socket
 
-#local imports
+# local imports
 import announce_service as sa
 
 pywintypes.datetime = pywintypes.TimeType
@@ -21,40 +26,56 @@ tree = {}
 obj_in_node = {}
 
 
-#Constants
+# Constants
 ITEM_ACCESS_RIGHTS = 5
 ACCESS_READ = 0
 ACCESS_WRITE = 1
 ACCESS_READ_WRITE = 2
 ITEM_VALUE = 2
 
+
 class SubHandler(object):
     """
     Subscription handler to receive events from the server.
     """
 
-    def datachange_notification(self, node, val, data):
-        p_a_string = node.get_path_as_string() #Get a list containing root, objects, opc da server
+    def __init__(self, n, opcda_string):
+        self.i = 0
+        self.opcda_string = opcda_string
+        self.n = n
+
+    async def final_datachange_notification(self, node, val, data):
+        # Get a list containing root, objects, opc da server
+        p_a_string = await node.get_path(as_string=True)
+        print(p_a_string)
+        #print(da.servers()[0])
         da_address = '.'.join([a.split(':')[1] for a in p_a_string[3:]])
+
         da = OpenOPC.client()
-        da.connect(OPCDA_SERVER_STRING)
+
+        da.connect(self.opcda_string)
         print('Datachanged ', da_address, val)
         da.write((da_address, val,))
         da.close()
 
+    def datachange_notification(self, node, val, data):
+        self.i = self.i + 1
+
+        if(self.i == self.n):
+            self.datachange_notification = self.final_datachange_notification
 
 def read_value(value):
-	value = value[0]
-	if isinstance(value,decimal.Decimal):
-		value = float(value)
-	elif isinstance(value,list):
-		if len(value) == 0:
-			value = None
-	elif isinstance(value,tuple):
-		if len(value) == 0:
-			value = None
+    value = value[0]
+    if isinstance(value,decimal.Decimal):
+        value = float(value)
+    elif isinstance(value,list):
+        if len(value) == 0:
+            value = None
+    elif isinstance(value,tuple):
+        if len(value) == 0:
+            value = None
 
-	return value
+    return value
     
 async def sort_nodes_list(list, idx, root, da):
     
@@ -89,58 +110,59 @@ async def sort_nodes_list(list, idx, root, da):
     
         if obj_in_node[ITEM_ACCESS_RIGHTS] in [ACCESS_READ]:
             readable_variables[node] = opcua_node
-            #print(opcua_node)
+            # print(opcua_node)
         if obj_in_node[ITEM_ACCESS_RIGHTS] in [ACCESS_WRITE, ACCESS_READ_WRITE]:
             await opcua_node.set_writable()        
             writeable_variables[node] = opcua_node
-            #print(opcua_node)
+            # print(opcua_node)
 
 
 async def main():
 
-    #We connect to the OPC-DA server (I assume there will only be one, else this will have to be changed)
-    #We can also check if there is a server and if there isn't one we'll run only an OPC UA server without conversion
+    # We connect to the OPC-DA server (I assume there will only be one, else this will have to be changed)
+    # We can also check if there is a server and if there isn't one we'll run only an OPC UA server without conversion
     da = OpenOPC.client()
     OPCDA_SERVER_STRING = da.servers()[0]
     da.connect(OPCDA_SERVER_STRING) #Connect to the first server in the array
     print(OPCDA_SERVER_STRING)
 
-    #Setup the server for UA
+    # Setup the server for UA
     server = Server()
     await server.init()
-    server.set_endpoint('opc.tcp://0.0.0.0:4840/freeopcua/server/')
+    server.set_endpoint("opc.tcp://192.168.10.196:55341")
+    
+    server.set_server_name("SErverRER")
+
     idx = await server.register_namespace(UA_URI)
     root = await server.nodes.objects.add_object(idx,OPCDA_SERVER_STRING)
     
-    #We want to find the OPC-DA server nodes in aliases
+    # We want to find the OPC-DA server nodes in aliases
     nodes_list = da.list('*', recursive=True) #A list of dot-delimited strings
     await sort_nodes_list(nodes_list, idx, root, da)
 
     
     
-    try:
-        async with server: #Starting the server
+    async with server: #Starting the server
             
-            handler = SubHandler() #Subscribing to datachanges coming from the UA clients
-            sub = await server.create_subscription(500, handler)
-            handle = await sub.subscribe_data_change(writeable_variables.values())
-            #In Robotstudio all variables are writeable, so the readable variables are empty
-            #This should be changed when tried in a real environment, so temporary for now
-            readable_vars = list(writeable_variables.keys()) #readable_variables
-            #print(readable_vars)
+        handler = SubHandler(len(writeable_variables), OPCDA_SERVER_STRING) #Subscribing to datachanges coming from the UA clients
+        sub = await server.create_subscription(500, handler)
+        await sub.subscribe_data_change(writeable_variables.values())
+            # In Robotstudio all variables are writeable, so the readable variables are empty
+            # This should be changed when tried in a real environment, so temporary for now
+        readable_vars = list(writeable_variables.keys()) #readable_variables
+            # print(readable_vars)
         while True:
-            await asyncio.sleep(1)
+            
             for i in da.read(readable_vars):
                 print(i)
                 da_id = i[0]
                 var_handler = writeable_variables[da_id] # Due to change
-                var_handler.set_value(read_value(i[1:]))
+                await var_handler.set_value(read_value(i[1:]))
+            await asyncio.sleep(1)
+        
 
-
-    finally:
-        await server.stop()
-        da.close()
+  
 
 if __name__ == "__main__":
-    sa.start_service_announcement(device_name="_adda-server.")
+    sa.start_service_announcement(device_name="_adda-server.", iport=55341)
     asyncio.run(main())

@@ -211,7 +211,7 @@ class Ui_MainWindow(object):
                                         print(function_name)
                                         if('Methods' == function_name):
                                             bl = server1.client.get_node(i).call_method("2:subscribe","opc.tcp://" + server2.Server, str(dict1_key), str(key2))
-                                            print(bl, "Hi")
+                                            self.textBrowser.append(bl)
                                     server1.client.disconnect()
                                 if 'qx' in value and 'ix' in value2:
                                     server2.client.connect()
@@ -221,6 +221,7 @@ class Ui_MainWindow(object):
                                         
                                         if('Methods' == function_name):    
                                             bl = server1.client.get_node(i).call_method("2:subscribe","opc.tcp://" + server1.Server, str(key2), str(dict1_key))
+                                            self.textBrowser.append(bl)
                                     server2.client.disconnect()
         
         #server1.client.connect()
@@ -327,7 +328,9 @@ class Ui_MainWindow(object):
         url = dsc.Server_Discovery()
         url.get_servers()
         self.SERVER_ARR = url.get_all(0)
+        print(self.SERVER_ARR)
         servers = url.get_all_as_address()
+        print(servers)
         
 
         j = 0
