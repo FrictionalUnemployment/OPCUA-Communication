@@ -328,7 +328,9 @@ class Ui_MainWindow(object):
         url = dsc.Server_Discovery()
         url.get_servers()
         self.SERVER_ARR = url.get_all(0)
+        print(self.SERVER_ARR)
         servers = url.get_all_as_address()
+        print(servers)
         
 
         j = 0
