@@ -42,6 +42,8 @@ class ServerPI:
 
     def __init__(self):
         self.temp = TEMP
+        self.qxBall = True
+        self.qxBarrel = True
         self.clients = {}
     
     # This ua method is used to subscribe to a variable on
@@ -108,8 +110,12 @@ class ServerPI:
         zobj = await objects.add_object(idx, "Methods")
         print("Methods object:", zobj)
 
+        xvar = await lFolder.add_variable(idx, "qxBarrel", self.qxBarrel)
+        yvar = await lFolder.add_variable(idx, "qxBall", self.qxBall)
         zvar = await lFolder.add_variable(idx, "qxTemperature", self.temp)
         print("Temp var: ", zvar)
+        print("qxBall var:", yvar)
+        print("qxBarrel var:", xvar)
 
         endp = self.method_var("Endpoint", "Address to tendpoint")
         qxvar = self.method_var("qx", "Output variable to connect to server.")
@@ -120,10 +126,16 @@ class ServerPI:
 
         async with server:
             while True:
-                await asyncio.sleep(5)
+                await asyncio.sleep(1.2)
                 await zvar.write_value(self.temp)
+                await yvar.write_value(self.qxBall)
+                await xvar.write_value(self.qxBarrel)
                 self.temp = 19 + random.random()
+                self.qxBall = not self.qxBall
+                self.qxBarrel = not self.qxBarrel
                 print(self.temp)
+                print(self.qxBall)
+                print(self.qxBarrel)
 
 
 if __name__ == "__main__":

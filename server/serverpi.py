@@ -27,23 +27,24 @@ class SubHandler():
     Do not do expensive, slow or network operation there. Create another 
     thread if you need to do such a thing
     """
+    def __init__(self, variables, client):
+        self.vars = variables
+        self.cl = client
 
     def datachange_notification(self, node, val, data):
-        print("Python: New data change event", node, val)
+        n = self.cl.get_node(self.vars[str(node)])
+        n.write_value(val)
+        print("Python: New data change event", n, val)
 
     def event_notification(self, event):
         print("Python: New event", event)
-
-client = None
-handler = SubHandler()
-sub = None
-handle = None
-
 
 class ServerPI:
 
     def __init__(self):
         self.temp = TEMP
+        self.ixBall = TEMP
+        self.ixBarrel = TEMP
         self.clients = {}
     
     # This ua method is used to subscribe to a variable on
@@ -55,28 +56,32 @@ class ServerPI:
     # Returns void.
     @uamethod
     async def subscribe(self, parent, endpoint, qx, ix):
+        # The client tuple consists of a Client object, a SubHandler object,
+        # a Subscription, a list of subscribed variables, and a dictionary of 
+        # subscribed and connected variables as strings.
         server = str(endpoint)
-        if server not in self.clients:
+        if server not in self.clients.keys():
             try:
                 client = Client(server)
+                print("After Client(server)")
                 await client.connect()
+                print("After client.connect()")
                 await client.load_data_type_definitions()
-                self.clients[server] = (client,set())
+                print("After client.loaddatattype")
+                tmpvariables = {}
+                tmphandler = SubHandler(tmpvariables, client)
+                tmpsubscription = await client.create_subscription(500, tmphandler)
+                self.clients[server] = (client, tmphandler, tmpsubscription, [], tmpvariables)
             except:
                 return "Could not reach the server specified."
         else:
             client = self.clients[server][0]
 
-        #root = client.get_root_node(
-        #uri = "http://examples.freeopcua.github.io"
-        #idx = client.get_namespace_index(uri)
-
         qxvar = client.get_node(qx)
-        if qx not in self.clients[server][1]:
-            self.clients[server][1].add(qx)
-            print(len(self.clients[server][1]))
-            sub = await client.create_subscription(500, handler)
-            handle = await sub.subscribe_data_change(qxvar)
+        if qx not in self.clients[server][4].keys():
+            self.clients[server][4][qx] = ix
+            subbedvar = await self.clients[server][2].subscribe_data_change(qxvar)
+            self.clients[server][3].append(subbedvar)
         time.sleep(0.1)
         return "Successfully subscribed to the specified variable!"
             
@@ -103,29 +108,24 @@ class ServerPI:
 
         objects = server.nodes.objects
 
-        #dev = await server.nodes.base_object_type.add_object_type(idx, FLAT_NAME)
-
         lFolder = await objects.add_folder(idx, "Sensors")
-        print("Sensors folder: ", lFolder)
         zobj = await objects.add_object(idx, "Methods")
-        print("Methods object:", zobj)
-
         zvar = await lFolder.add_variable(idx, "ixTemperature", self.temp)
-        print("Temp var: ", zvar)
+        yvar = await lFolder.add_variable(idx, "ixBall", self.ixBall)
+        xvar = await lFolder.add_variable(idx, "ixBarrel", self.ixBarrel)
+        print(zvar)
+        print(yvar)
+        print(xvar)
 
         endp = self.method_var("Endpoint", "Address to tendpoint")
         qxvar = self.method_var("qx", "Output variable to connect to server.")
         ixvar = self.method_var("ix", "Input variable that is to be connected to.")
         ret = self.method_var("ret", "Return message for information of what happend.")
-
         await zobj.add_method(idx, "subscribe", self.subscribe, [endp, qxvar, ixvar], [ret])
 
         async with server:
             while True:
                 await asyncio.sleep(0.1)
-                await zvar.write_value(self.temp)
-                self.temp = 19 + random.random()
-
 
 if __name__ == "__main__":
     print(DISCOVERY_NAME)
