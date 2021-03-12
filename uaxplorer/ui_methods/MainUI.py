@@ -10,13 +10,16 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets, Qt
+from PyQt5.QtWidgets import QMenu
 from zeroconf import ServiceBrowser, Zeroconf
 import server_discovery as dsc
 import Ui_client as ui_c
 import client_nodes as cl_node
+from opcua import client
 from client_nodes import StandardItem as StItem
 import navigating_nodes as nav
 import sys
+
 
 class Node_storage:
     def __init__(self, server_name, node_name, node_id, standarditem):
@@ -51,14 +54,26 @@ class Ui_MainWindow(object):
         self.lineEdit.setStyleSheet("color: rgb(0, 0, 0);")
         self.lineEdit.setObjectName("lineEdit")
 
-        self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
-        self.groupBox.setGeometry(QtCore.QRect(340, 20, 611, 331))
-        self.groupBox.setFlat(False)
-        self.groupBox.setCheckable(False)
-        self.groupBox.setObjectName("groupBox")
-        self.groupBox.setStyleSheet("color: rgb(0,0,0);")
+        self.tableWidget = QtWidgets.QTableWidget(self.centralwidget)
+        self.tableWidget.setGeometry(QtCore.QRect(340, 26, 612, 325))
+        self.tableWidget.setStyleSheet("color: rgb(0, 0, 0);")
+        self.tableWidget.setObjectName("tableWidget")
+        self.tableWidget.setColumnCount(6)
+        self.tableWidget.setRowCount(0)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(0, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(1, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(2, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(3, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(4, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(5, item)
 
-      
+        
 
         self.textBrowser = QtWidgets.QTextBrowser(self.centralwidget)
         self.textBrowser.setGeometry(QtCore.QRect(10, 360, 942, 111))
@@ -80,6 +95,11 @@ class Ui_MainWindow(object):
         self.treeView = QtWidgets.QTreeView(self.centralwidget)
         self.treeView.setGeometry(QtCore.QRect(10, 26, 331, 325))
         self.treeView.setObjectName("treeView")
+        self.treeView.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.treeView.customContextMenuRequested.connect(self.contextMenuEvent)
+        
+        
+        
 
         self.right_treeView = QtWidgets.QTreeView(self.centralwidget)
         self.right_treeView.setGeometry(QtCore.QRect(951, 26, 331, 325))
@@ -92,7 +112,7 @@ class Ui_MainWindow(object):
         self.textBrowser.raise_()
         self.pushButton.raise_()
         self.treeView.raise_()
-        self.groupBox.raise_()  
+        self.tableWidget.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 912, 21))
@@ -131,6 +151,8 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+        
         
        
         ############################### Discovery ################################
@@ -143,7 +165,7 @@ class Ui_MainWindow(object):
         ###### Right hand tree #######
         self.right_treeView.setModel(self.treeModel)
         self.right_treeView.doubleClicked.connect(self.getValueLeft)
-
+       
 
         ## VARIABLES #####
         self.ROOT_CHILDREN_NODES = []
@@ -155,7 +177,19 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(_translate("MainWindow", "CustomOPC"))
         self.Connect.setText(_translate("MainWindow", "Connect"))
         self.Discover.setText(_translate("MainWindow", "Discover"))
-        self.groupBox.setTitle(_translate("MainWindow", "Attribute Panel"))
+        item = self.tableWidget.horizontalHeaderItem(0)
+        item.setText(_translate("MainWindow", "NodeId"))
+        item = self.tableWidget.horizontalHeaderItem(1)
+        item.setText(_translate("MainWindow", "Value"))
+        item = self.tableWidget.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "DataType"))
+        item = self.tableWidget.horizontalHeaderItem(3)
+        item.setText(_translate("MainWindow", "TimeStamp"))
+        item = self.tableWidget.horizontalHeaderItem(4)
+        item.setText(_translate("MainWindow", "Quality"))
+        item = self.tableWidget.horizontalHeaderItem(5)
+        item.setText(_translate("MainWindow", "NodePath"))
+       
         self.textBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
@@ -169,6 +203,10 @@ class Ui_MainWindow(object):
         self.actionRight_Hand_tree.setText(_translate("MainWindow", "Expand a right hand tree"))
         self.hide_Right_Hand_tree.setText(_translate("MainWindow", "Hide the right hand tree"))
         self.closing_app.setText(_translate("MainWindow", "Quit"))
+    
+    def onitemclicked(self):
+        item = self.treeView.currentIndex()
+        print(item.text(0))
 
 
     def closing_application(self):
@@ -312,9 +350,60 @@ class Ui_MainWindow(object):
        self.clients.append(cl_node.Client_nodes(adress, adress))
        self.rootNode.appendRow(self.clients[-1].ROOT_NODE)
        self.textBrowser.append("Manually added service: " + adress + " !Note: name will be set to the address:port!")
+
+   
         
+    def contextMenuEvent(self, pos):
+        indexes = self.treeView.indexAt(pos)
+        print(indexes.data())
         
-      
+       
+        
+        #level = 0
+        
+        #while indexes.parent().isValid():
+        #    index = index.parent()
+        #    level += 1
+        menu = QMenu()
+           
+        
+        subscribe = menu.addAction("subscribe")
+        print(indexes)
+               
+               
+            
+             
+                
+        action = menu.exec_(self.treeView.viewport().mapToGlobal(pos))
+        row = 0
+        self.tableWidget.setRowCount(1)
+            
+        if action == subscribe:
+            
+                
+                
+                
+                    
+                
+               
+            self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem("hej"))
+            self.tableWidget.setItem(row, 1,QtWidgets.QTableWidgetItem(""))
+                    
+    
+
+               
+          
+
+                
+            
+              
+                
+                
+
+
+           
+
+        
 
 
     def discover_servers(self):
