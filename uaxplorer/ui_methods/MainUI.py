@@ -15,18 +15,64 @@ from zeroconf import ServiceBrowser, Zeroconf
 import server_discovery as dsc
 import Ui_client as ui_c
 import client_nodes as cl_node
-from opcua import client
+from opcua import client, Client
 from client_nodes import StandardItem as StItem
 import navigating_nodes as nav
 import sys
 
 
-class Node_storage:
+class Node_storage: #Necessary for keeping track of every standarditem and where it belongs too and information that is good for references.
     def __init__(self, server_name, node_name, node_id, standarditem):
         self.server_name = server_name
         self.node_name = node_name
         self.node_id = node_id
         self.standarditem = standarditem
+
+class Subscription_storage: #Used for when an user subscribes to a node and wants information from it (Middle widget)
+    def __init__(self, server_name, node_name, node_id, server_address, row, tablewidget):
+        self.server_name = server_name
+        self.node_name = node_name
+        self.node_id = node_id
+        self.row = row #Keep track of what row to append the information into.
+        self.server_address = server_address
+        self.tableWidget = tablewidget
+
+        self.tableWidget.setItem(self.row, 0, QtWidgets.QTableWidgetItem(self.server_name)) #Set the server name and append into the widget
+        self.tableWidget.setItem(self.row, 1, QtWidgets.QTableWidgetItem(self.node_name)) #Set node name into the widget
+
+        self.tableWidget.setItem(self.row, 2, QtWidgets.QTableWidgetItem(str(self.node_id))) #Node_id converted to string and appended.
+
+        self.client = Client("opc.tcp://" + self.server_address)
+
+        self.client.connect()
+        var = self.client.get_node(node_id) #Get the data values from the node we are subscribing to 
+        #DataValue(Value:Variant(val:19,type:VariantType.Int64), StatusCode:StatusCode(Good), SourceTimestamp:2021-03-13 12:36:58.621994)
+        #Example of outprint from var
+
+        self.tableWidget.setItem(self.row, 4, QtWidgets.QTableWidgetItem(str(var.get_data_type_as_variant_type()))) #Get the variant type of the node
+        self.tableWidget.setItem(self.row, 5, QtWidgets.QTableWidgetItem(str(var.get_data_value().SourceTimestamp))) #Get the time stamp and display
+        self.tableWidget.setItem(self.row, 6, QtWidgets.QTableWidgetItem(str(var.get_data_value().StatusCode))) #Get the statuscode Good, Bad
+        handler = SubHandler(self.row, self.tableWidget) #Create a subscription handelr to update the variables value outprint. Also send in the widget and row
+        sub = self.client.create_subscription(500, handler) #Refresh every 500 ms
+        handle = sub.subscribe_data_change(var) #Send in the variable object.
+        
+
+class SubHandler(object):
+    def __init__(self, row, tablewidget):
+        self.row = row #Keep track of the row to know where to append
+        self.tableWidget = tablewidget #Get the tablewidget as this is a class it requires it.
+
+    """
+    Subscription Handler. To receive events from server for a subscription
+    data_change and event methods are called directly from receiving thread.
+    Do not do expensive, slow or network operation there. Create another 
+    thread if you need to do such a thing
+    """
+
+    def datachange_notification(self, node, val, data):
+        #print("Python: New data change event", node, val)
+        self.tableWidget.setItem(self.row, 3, QtWidgets.QTableWidgetItem(str(val))) #When a data change happens we append the value to the widget.
+        self.tableWidget.viewport().update() #We update the tableWidget, so that the update becomes present in the user client.
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -58,7 +104,7 @@ class Ui_MainWindow(object):
         self.tableWidget.setGeometry(QtCore.QRect(340, 26, 612, 325))
         self.tableWidget.setStyleSheet("color: rgb(0, 0, 0);")
         self.tableWidget.setObjectName("tableWidget")
-        self.tableWidget.setColumnCount(6)
+        self.tableWidget.setColumnCount(7)
         self.tableWidget.setRowCount(0)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(0, item)
@@ -72,6 +118,8 @@ class Ui_MainWindow(object):
         self.tableWidget.setHorizontalHeaderItem(4, item)
         item = QtWidgets.QTableWidgetItem()
         self.tableWidget.setHorizontalHeaderItem(5, item)
+        item = QtWidgets.QTableWidgetItem()
+        self.tableWidget.setHorizontalHeaderItem(6, item)
 
         
 
@@ -170,6 +218,10 @@ class Ui_MainWindow(object):
         ## VARIABLES #####
         self.ROOT_CHILDREN_NODES = []
 
+        ## TABLE WIDGET - MIDDLE PART - #####
+        self.row = 0
+        self.subscriptions_array = list()
+
         
 
     def retranslateUi(self, MainWindow):
@@ -178,17 +230,20 @@ class Ui_MainWindow(object):
         self.Connect.setText(_translate("MainWindow", "Connect"))
         self.Discover.setText(_translate("MainWindow", "Discover"))
         item = self.tableWidget.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "NodeId"))
+        item.setText(_translate("MainWindow", "Server name"))
         item = self.tableWidget.horizontalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Value"))
+        item.setText(_translate("MainWindow", "Node Name"))
         item = self.tableWidget.horizontalHeaderItem(2)
-        item.setText(_translate("MainWindow", "DataType"))
+        item.setText(_translate("MainWindow", "Node Id"))
         item = self.tableWidget.horizontalHeaderItem(3)
-        item.setText(_translate("MainWindow", "TimeStamp"))
+        item.setText(_translate("MainWindow", "Value"))
         item = self.tableWidget.horizontalHeaderItem(4)
-        item.setText(_translate("MainWindow", "Quality"))
+        item.setText(_translate("MainWindow", "DataType"))
         item = self.tableWidget.horizontalHeaderItem(5)
-        item.setText(_translate("MainWindow", "NodePath"))
+        item.setText(_translate("MainWindow", "TimeStamp"))
+        item = self.tableWidget.horizontalHeaderItem(6)
+        item.setText(_translate("MainWindow", "Quality"))
+        
        
         self.textBrowser.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
@@ -351,60 +406,48 @@ class Ui_MainWindow(object):
        self.rootNode.appendRow(self.clients[-1].ROOT_NODE)
        self.textBrowser.append("Manually added service: " + adress + " !Note: name will be set to the address:port!")
 
-   
         
     def contextMenuEvent(self, pos):
         indexes = self.treeView.indexAt(pos)
         print(indexes.data())
+
+        root = indexes.parent() #The root node of the node index that the user double clicks
         
-       
-        
-        #level = 0
-        
-        #while indexes.parent().isValid():
-        #    index = index.parent()
-        #    level += 1
+        while(root.parent().data() != None): #We loop till we get None as data (We're at the end of the hierarchy)
+            root = root.parent() 
+
+
         menu = QMenu()
-           
-        
         subscribe = menu.addAction("subscribe")
-        print(indexes)
-               
-               
-            
-             
-                
+  
         action = menu.exec_(self.treeView.viewport().mapToGlobal(pos))
-        row = 0
-        self.tableWidget.setRowCount(1)
+        
+        self.tableWidget.setRowCount(self.row + 1)
             
+        server_address = None
+        nodes_id_and_name = None
+        node_id = None
+
         if action == subscribe:
             
-                
-                
-                
-                    
-                
-               
-            self.tableWidget.setItem(row, 0, QtWidgets.QTableWidgetItem("hej"))
-            self.tableWidget.setItem(row, 1,QtWidgets.QTableWidgetItem(""))
-                    
-    
-
-               
-          
-
-                
+            for i in self.clients:
+                if(i.server_name == root.data()):
+                    server_address = i.Server
+                    i.client.connect()
+                    n = nav.Navigating_nodes(i.client)
+                    nodes_id_and_name = n.get_children_nodes_name(n.get_root_nodes())
+                    i.client.disconnect()
+                    break
             
-              
-                
-                
-
-
-           
-
-        
-
+            for dict1_key, dict1_values in nodes_id_and_name.items():
+                for value in dict1_values:
+                    if(value == indexes.data()):
+                        node_id = dict1_key
+            
+            print(server_address, node_id)
+            self.subscriptions_array.append(Subscription_storage(root.data(), indexes.data(), node_id, server_address, self.row, self.tableWidget))
+            self.row += 1
+                    
 
     def discover_servers(self):
         if len(self.clients) > 0:
@@ -433,8 +476,7 @@ class Ui_MainWindow(object):
             self.rootNode.appendRow(i.ROOT_NODE)
 
 
-        
-
+  
     
 
             
