@@ -18,4 +18,5 @@ These are the libraries needed, should work for Python >3.6.x
 ```pip3 install OpenOPC-Python3x
 pip3 install asycnio
 pip3 install asyncua
-pip3 install PyQt5```
+pip3 install PyQt5
+```
