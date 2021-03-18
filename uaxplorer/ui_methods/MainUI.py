@@ -12,7 +12,6 @@ from PyQt5 import QtCore, QtGui, QtWidgets, Qt
 from PyQt5.QtWidgets import QMenu
 from zeroconf import ServiceBrowser, Zeroconf
 import server_discovery as dsc
-import Ui_client as ui_c
 import client_nodes as cl_node
 from opcua import client, Client
 from client_nodes import StandardItem as StItem
@@ -56,12 +55,6 @@ class Subscription_storage:
         # DataValue(Value:Variant(val:19,type:VariantType.Int64), StatusCode:StatusCode(Good), SourceTimestamp:2021-03-13 12:36:58.621994)
         # Example of outprint from var
 
-        self.tableWidget.setItem(self.row, 4, QtWidgets.QTableWidgetItem(
-            str(var.get_data_type_as_variant_type())))  # Get the variant type of the node
-        self.tableWidget.setItem(self.row, 5, QtWidgets.QTableWidgetItem(
-            str(var.get_data_value().SourceTimestamp)))  # Get the time stamp and display
-        self.tableWidget.setItem(self.row, 6, QtWidgets.QTableWidgetItem(
-            str(var.get_data_value().StatusCode)))  # Get the statuscode Good, Bad
         # Create a subscription handelr to update the variables value outprint. Also send in the widget and row
         handler = SubHandler(self.row, self.tableWidget)
         sub = self.client.create_subscription(
@@ -78,15 +71,21 @@ class SubHandler(object):
     """
     Subscription Handler. To receive events from server for a subscription
     data_change and event methods are called directly from receiving thread.
-    Do not do expensive, slow or network operation there. Create another 
+    Do not do expensive, slow or network operation there. Create another
     thread if you need to do such a thing
     """
 
     def datachange_notification(self, node, val, data):
-        #print("Python: New data change event", node, val)
+        # print("Python: New data change event", node, val)
         # When a data change happens we append the value to the widget.
         self.tableWidget.setItem(
             self.row, 3, QtWidgets.QTableWidgetItem(str(val)))
+        self.tableWidget.setItem(self.row, 4, QtWidgets.QTableWidgetItem(
+            str(data.monitored_item.Value.Value.VariantType)))  # Get the variant type of the node
+        self.tableWidget.setItem(self.row, 5, QtWidgets.QTableWidgetItem(
+            str(data.monitored_item.Value.SourceTimestamp)))  # Get the time stamp and display
+        self.tableWidget.setItem(self.row, 6, QtWidgets.QTableWidgetItem(
+            str(data.monitored_item.Value.StatusCode)))  # Get the statuscode Good, Bad
         # We update the tableWidget, so that the update becomes present in the user client.
         self.tableWidget.viewport().update()
 
@@ -273,7 +272,8 @@ class Ui_MainWindow(object):
     def closing_application(self):
         QtWidgets.qApp.quit()
 
-    def linking_servers(self): #Linking the servers and navigating all the nodes and finding the correct qx ix subscription.
+    # Linking the servers and navigating all the nodes and finding the correct qx ix subscription.
+    def linking_servers(self):
         server1 = None
         server2 = None
         nav1 = None
@@ -300,7 +300,7 @@ class Ui_MainWindow(object):
                     for key2, values2 in nav2.items():
                         for value2 in values2:
                             if value[2:] == value2[2:]:
-                        
+
                                 if 'ix' in value and 'qx' in value2:
                                     server1.client.connect()
                                     get_obj = server1.client.get_objects_node().get_children()
@@ -321,13 +321,13 @@ class Ui_MainWindow(object):
                                             i).get_display_name()._text
 
                                         if('Methods' == function_name):
-                                            bl = server1.client.get_node(i).call_method(
+                                            bl = server2.client.get_node(i).call_method(
                                                 "2:subscribe", "opc.tcp://" + server1.Server, str(key2), str(dict1_key))
                                             self.textBrowser.append(bl)
                                     server2.client.disconnect()
 
         # server1.client.connect()
-        #f = server1.client.get_objects_node().get_children()
+        # f = server1.client.get_objects_node().get_children()
         # for i in f:
         #    kkk = server1.client.get_node(i).get_display_name().__dict__['_text']
        #     print(server1.client.get_node(i).get_display_name()._text)
@@ -418,12 +418,47 @@ class Ui_MainWindow(object):
         self.textBrowser.resize(942, 111)
         self.pairingbutton.hide()
 
-    def manual_connection(self): #Manually create a connection to a server and append it to the arrays for navigation.
+    # Manually create a connection to a server and append it to the arrays for navigation.
+    def manual_connection(self):
         adress = self.lineEdit.text()
         self.clients.append(cl_node.Client_nodes(adress, adress))
         self.rootNode.appendRow(self.clients[-1].ROOT_NODE)
         self.textBrowser.append("Manually added service: " +
                                 adress + " !Note: name will be set to the address:port!")
+
+    def discover_servers(self): # For discovering and displaying the OPC UA servers in the UA interface.
+        if len(self.clients) > 0: # We check if clients have been added and remove them if so to not create duplicate clients.
+            self.clients.clear()
+            self.treeModel.removeRows(0, self.treeModel.rowCount())
+
+        # We also remove the children nodes.
+        if len(self.ROOT_CHILDREN_NODES) > 0:
+            self.ROOT_CHILDREN_NODES.clear()
+
+        # We create an instance of Server_discovery.
+        url=dsc.Server_Discovery()
+        # We call the get servers function to get the servers.
+        url.get_servers()
+        # We get the server names (in a list) from the servers and store it.
+        self.SERVER_ARR=url.get_all(0)
+        # We get a list of the addresses and port ex : [192.168.1.10:3249, 192.168.1.5:3249]
+        servers=url.get_all_as_address()
+        print(servers)
+
+        j=0
+        for i in servers:  # We iterate through the server list
+            # We append a Client_nodes instance into an array for further reference.
+            self.clients.append(cl_node.Client_nodes(i, self.SERVER_ARR[j]))
+                                                                             # Client_nodes arguments require the IP:PORT and server name which it stores.
+            self.textBrowser.append(
+                "Service added: " + self.SERVER_ARR[j] + "- At address: " + i)  # Logger for the User interface.
+
+            # We iterate through all servers but we also need to add the correct server_name which is also an array. Best to just use a counter here.
+            j += 1
+
+        for i in self.clients:  # We add the server name to the treeview.
+            self.rootNode.appendRow(i.ROOT_NODE)
+        #print()
 
     def contextMenuEvent(self, pos):
         indexes = self.treeView.indexAt(pos)
@@ -436,73 +471,59 @@ class Ui_MainWindow(object):
             root = root.parent()
 
         menu = QMenu()
-        subscribe = menu.addAction("Subscribe to variable") #Note that it creates a button to any widget. Fail-safes have not been added.
+        # Note that it creates a button to any widget. Fail-safes have not been added.
+        subscribe = menu.addAction("Subscribe to variable")
 
-        action = menu.exec_(self.treeView.viewport().mapToGlobal(pos)) #Display the action at correct position.
+        # Display the action at correct position.
+        action = menu.exec_(self.treeView.viewport().mapToGlobal(pos))
 
-        self.tableWidget.setRowCount(self.row + 1) #We add another count to the tablewidget.
+        # We add another count to the tablewidget.
+        self.tableWidget.setRowCount(self.row + 1)
 
         server_address = None
         nodes_id_and_name = None
         node_id = None
 
-        if action == subscribe: #If someone presses the button then we want to iterate and find that variable and display it.
+        # If someone presses the button then we want to iterate and find that variable and display it.
+        if(action == subscribe):
 
-            for i in self.clients: #Find the right client and if the server_name is equals to the first treeview node (The root node) then continue 
+            # Find the right client and if the server_name is equals to the first treeview node (The root node) then continue
+            for i in self.clients:
                 if(i.server_name == root.data()):
-                    server_address = i.Server #Add the server to our local variable.
-                    i.client.connect() #Connect to the UA client for the UA server.
+                    # Add the server to our local variable.
+                    server_address = i.Server
+                    # Connect to the UA client for the UA server.
+                    i.client.connect()
                     n = nav.Navigating_nodes(i.client)
                     nodes_id_and_name = n.get_children_nodes_name(
-                        n.get_root_nodes()) #Lets recursively get all the nodes and its name : id 
-                    i.client.disconnect() #Disconnect from the UA client after we're done
+                        n.get_root_nodes())  # Lets recursively get all the nodes and its name : id
+                    i.client.disconnect()  # Disconnect from the UA client after we're done
                     break
 
-            for dict1_key, dict1_values in nodes_id_and_name.items(): #Let us find the node id for the variable name that we're trying to subscribe to
+            # Let us find the node id for the variable name that we're trying to subscribe to
+            for dict1_key, dict1_values in nodes_id_and_name.items():
                 for value in dict1_values:
-                    if(value == indexes.data()): #indexes.data tells us what variable we are trying to subscribe to.
-                        node_id = dict1_key #Lets set the local node id variable to the actual variables node id.
-                        #dict1_key is the node id and dict1_values is the string name of the node.
+                    # indexes.data tells us what variable we are trying to subscribe to.
+                    if(value == indexes.data()):
+                        # Lets set the local node id variable to the actual variables node id.
+                        node_id = dict1_key
+                        # dict1_key is the node id and dict1_values is the string name of the node.
 
-            
             self.subscriptions_array.append(Subscription_storage(
-                root.data(), indexes.data(), node_id, server_address, self.row, self.tableWidget)) #We also store all the information (For future reference) also to create our subscription handler.
-            self.textBrowser.append("Created a subscription to: " + str(indexes.data())
-            self.row += 1 #As we have subscribed to a variable, next subscription needs to be on the next row.
+                root.data(), indexes.data(), node_id, server_address, self.row, self.tableWidget))  # We also store all the information (For future reference) also to create our subscription handler.
+            # As we have subscribed to a variable, next subscription needs to be on the next row.
+            self.row += 1
+        self.textBrowser.append("Created a subscription to: " + str(indexes.data()))
+     
 
-    def discover_servers(self): #For discovering and displaying the OPC UA servers in the UA interface.
-       
-        if len(self.clients) > 0: #We check if clients have been added and remove them if so to not create duplicate clients.
-            self.clients.clear()
-            self.treeModel.removeRows(0, self.treeModel.rowCount()) 
+    
 
-        if len(self.ROOT_CHILDREN_NODES) > 0: #We also remove the children nodes.
-            self.ROOT_CHILDREN_NODES.clear()
+# Set up the User Interface window.
+if __name__ == "__main__": 
 
-        url = dsc.Server_Discovery() #We create an instance of Server_discovery.
-        url.get_servers() #We call the get servers function to get the servers.
-        self.SERVER_ARR = url.get_all(0) #We get the server names (in a list) from the servers and store it.
-        servers = url.get_all_as_address() #We get a list of the addresses and port ex : [192.168.1.10:3249, 192.168.1.5:3249]
-        print(servers)
-
-        j = 0
-        for i in servers: #We iterate through the server list
-            self.clients.append(cl_node.Client_nodes(i, self.SERVER_ARR[j])) #We append a Client_nodes instance into an array for further reference.
-                                                                             #Client_nodes arguments require the IP:PORT and server name which it stores.
-            self.textBrowser.append(
-                "Service added: " + self.SERVER_ARR[j] + "- At address: " + i) #Logger for the User interface.
-
-            j += 1 #We iterate through all servers but we also need to add the correct server_name which is also an array. Best to just use a counter here.
-
-        for i in self.clients: #We add the server name to the treeview.
-            self.rootNode.appendRow(i.ROOT_NODE)
-
-
-if __name__ == "__main__": #Set up the User Interface window.
-
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
+    app=QtWidgets.QApplication(sys.argv)
+    MainWindow=QtWidgets.QMainWindow()
+    ui=Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
 
