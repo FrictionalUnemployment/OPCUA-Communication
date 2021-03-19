@@ -134,6 +134,7 @@ class ServerPI:
     # Add a local variable to the UA Server.
     async def add_variable(self, name, startvalue):
         variable = await self.varfolder.add_variable(self.idx, name, startvalue)
+        variable.set_writable()
         print(variable)
         self.localvars[name] = [variable, startvalue]
 
