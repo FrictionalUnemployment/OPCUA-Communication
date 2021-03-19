@@ -24,12 +24,13 @@ class SubHandler():
     Do not do expensive, slow or network operation there. Create another 
     thread if you need to do such a thing
     """
-    def __init__(self, variables, client):
+    def __init__(self, variables, client, localserver):
         self.vars = variables
         self.cl = client
+        self.srv = localserver
 
     def datachange_notification(self, node, val, data):
-        n = self.cl.get_node(self.vars[str(node)])
+        n = self.srv.get_node(self.vars[str(node)])
         n.write_value(val)
         print("Python: New data change event", n, val)
 
@@ -93,7 +94,7 @@ class ServerPI:
                 await client.load_data_type_definitions()
                 print("After client.loaddatattype")
                 tmpvariables = {}
-                tmphandler = SubHandler(tmpvariables, client)
+                tmphandler = SubHandler(tmpvariables, client, self.server)
                 tmpsubscription = await client.create_subscription(500, tmphandler)
                 self.clients[server] = (client, tmphandler, tmpsubscription, [], tmpvariables)
             except:
