@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from opcua import Server
 from random import randint
 import datetime
@@ -29,6 +30,7 @@ tt = Params4.add_variable(addspace, "ff", 0)
 ttr = Params5.add_variable(addspace, "feeef", 0)
 Temp = Params.add_variable(addspace, "ixTemperature",0)
 Press = Params.add_variable(addspace, "ixPressure",0)
+Nothing = Params.add_variable(addspace, "qxNothing",0)
 Time = Params.add_variable(addspace, "ixTime",0)
 Test = Params.add_variable(addspace, "ixTest",0)
 Test3 = Params.add_variable(addspace, "qxTesting",0)
