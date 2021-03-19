@@ -31,7 +31,7 @@ class SubHandler():
 
     def datachange_notification(self, node, val, data):
         n = self.srv.get_node(self.vars[str(node)])
-        n.write_value(val)
+        n.set_value(val)
         print("Python: New data change event", n, val)
 
     def event_notification(self, event):
@@ -95,7 +95,7 @@ class ServerPI:
                 print("After client.loaddatattype")
                 tmpvariables = {}
                 tmphandler = SubHandler(tmpvariables, client, self.server)
-                tmpsubscription = await client.create_subscription(500, tmphandler)
+                tmpsubscription = await client.create_subscription(50, tmphandler)
                 self.clients[server] = (client, tmphandler, tmpsubscription, [], tmpvariables)
             except:
                 return "Could not reach the server specified."
@@ -135,7 +135,6 @@ class ServerPI:
     async def add_variable(self, name, startvalue):
         variable = await self.varfolder.add_variable(self.idx, name, startvalue)
         variable.set_writable()
-        print(variable)
         self.localvars[name] = [variable, startvalue]
 
     # Used to set a value of a variable, requires the
