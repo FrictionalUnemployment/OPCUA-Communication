@@ -1,4 +1,4 @@
-#/usr/bin/env python3
+#usr/bin/env python3
 
 # This file contains a set of classes and methods to handle
 # running a OPC UA server on a raspberry pi.
@@ -27,13 +27,15 @@ class SubHandler():
     Do not do expensive, slow or network operation there. Create another 
     thread if you need to do such a thing
     """
-    def __init__(self, variables, client):
+    def __init__(self, variables, client, localserver):
         self.vars = variables
         self.cl = client
+        self.srv = localserver
 
-    def datachange_notification(self, node, val, data):
-        n = self.cl.get_node(self.vars[str(node)])
-        n.write_value(val)
+    async def datachange_notification(self, node, val, data):
+        n = self.srv.get_node(self.vars[str(node)])
+        await n.write_value(val)
+        print(self.vars)
         print("Python: New data change event", n, val)
 
     def event_notification(self, event):
@@ -42,9 +44,10 @@ class SubHandler():
 class ServerPI:
 
     def __init__(self):
+        self.server = None
         self.temp = TEMP
-        self.ixBall = TEMP
-        self.ixBarrel = TEMP
+        self.ixBall = False
+        self.ixBarrel = False
         self.clients = {}
     
     # This ua method is used to subscribe to a variable on
@@ -69,7 +72,7 @@ class ServerPI:
                 await client.load_data_type_definitions()
                 print("After client.loaddatattype")
                 tmpvariables = {}
-                tmphandler = SubHandler(tmpvariables, client)
+                tmphandler = SubHandler(tmpvariables, client, self.server)
                 tmpsubscription = await client.create_subscription(500, tmphandler)
                 self.clients[server] = (client, tmphandler, tmpsubscription, [], tmpvariables)
             except:
@@ -95,24 +98,27 @@ class ServerPI:
         return arg
 
     async def go(self):
-        server = Server()
-        await server.init()
-        server.set_endpoint(SERVER_ENDPOINT)
-        server.set_server_name(SERVER_NAME)
+        self.server = Server()
+        await self.server.init()
+        self.server.set_endpoint(SERVER_ENDPOINT)
+        self.server.set_server_name(SERVER_NAME)
         #server.set_security_policy([
         #    ua.SecurityPolicyType.NoSecurity,
         #    ua.SecurityPolicyType.Basic256Sha256_SignAndEncrypt,
         #    ua.SecurityPolicyType.Basic256Sha256_Sign])
 
-        idx = await server.register_namespace(UA_NAMESPACE)
+        idx = await self.server.register_namespace(UA_NAMESPACE)
 
-        objects = server.nodes.objects
+        objects = self.server.nodes.objects
 
         lFolder = await objects.add_folder(idx, "Sensors")
         zobj = await objects.add_object(idx, "Methods")
         zvar = await lFolder.add_variable(idx, "ixTemperature", self.temp)
         yvar = await lFolder.add_variable(idx, "ixBall", self.ixBall)
         xvar = await lFolder.add_variable(idx, "ixBarrel", self.ixBarrel)
+        yvar.set_writable()
+        xvar.set_writable()
+        zvar.set_writable()
         print(zvar)
         print(yvar)
         print(xvar)
@@ -123,7 +129,7 @@ class ServerPI:
         ret = self.method_var("ret", "Return message for information of what happend.")
         await zobj.add_method(idx, "subscribe", self.subscribe, [endp, qxvar, ixvar], [ret])
 
-        async with server:
+        async with self.server:
             while True:
                 await asyncio.sleep(0.1)
 
